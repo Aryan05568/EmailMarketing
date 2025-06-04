@@ -1767,7 +1767,7 @@ export default function EmailMarketingTool() {
                 }
             }, 100);
 
-            const response = await fetch(`${API_BASE}/upload-template`, {
+            const response = await fetch(`${BASEURL}/upload-template`, {
                 method: 'POST',
                 body: formData
             });
@@ -1820,7 +1820,7 @@ export default function EmailMarketingTool() {
         setConnectionStatus('');
 
         try {
-            const response = await fetch(`${API_BASE}/test-connection`, {
+            const response = await fetch(`${BASEURL}/test-connection`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -1992,7 +1992,7 @@ export default function EmailMarketingTool() {
             // Handle variableMappings object - convert to JSON string
             formData.append('variables', JSON.stringify(variableMappings));
 
-            const response = await fetch(`${API_BASE}/campaign`, {
+            const response = await fetch(`${BASEURL}/campaign`, {
                 method: 'POST',
                 body: formData
             });
@@ -2028,7 +2028,7 @@ export default function EmailMarketingTool() {
     // Check sending status
     const checkSendingStatus = async (jobId) => {
         try {
-            const response = await fetch(`${API_BASE}/send-status/${jobId}`);
+            const response = await fetch(`${BASEURL}/send-status/${jobId}`);
             const result = await response.json();
 
             if (result.success) {
@@ -2094,7 +2094,7 @@ export default function EmailMarketingTool() {
         if (!currentJobId) return;
 
         try {
-            const response = await fetch(`${API_BASE}/stop-sending`, {
+            const response = await fetch(`${BASEURL}/stop-sending`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
