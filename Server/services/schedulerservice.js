@@ -123,6 +123,7 @@ class CampaignScheduler {
                 .eq('id', id);
 
             // Read Excel data and filter recipients
+            console.log(excel_path)
             const recipientsRaw = readExcelData(excel_path);
             const recipients = filterValidRecipients(recipientsRaw, email_column);
 

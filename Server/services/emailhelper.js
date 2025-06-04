@@ -30,6 +30,7 @@ const cloudWatchClient = new CloudWatchClient({
 
 // Read Excel file and return data
 function readExcelData(excelPath) {
+    console.log(excelPath)
     if (!fs.existsSync(excelPath)) throw new Error('Excel file not found');
     const workbook = xlsx.readFile(excelPath);
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
