@@ -1697,7 +1697,7 @@ export default function EmailMarketingTool() {
                 }
             }, 100);
 
-            const response = await fetch(`${API_BASE}/preview-excel`, {
+            const response = await fetch(`${BASEURL}/preview-excel`, {
                 method: 'POST',
                 body: formData
             });
