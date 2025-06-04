@@ -9,6 +9,7 @@ import { getProfile, setAuthentication } from "../redux/userSlice";
 
 import { useState } from "react";
 import { Mail, Eye, EyeOff, Loader2, Lock, User } from "lucide-react";
+import { BASEURL } from '../utility/config';
 
 
 const LoginForm = () => {
@@ -40,7 +41,7 @@ const LoginForm = () => {
     setSuccess('');
 
     try {
-     const response = await fetch('http://localhost:5000/api/auth/login', {
+     const response = await fetch(`${BASEURL}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

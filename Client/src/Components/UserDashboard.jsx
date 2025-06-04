@@ -8,6 +8,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { getProfile, setAuthentication } from '../redux/userSlice';
 import CampaignScheduler from './CampaignScheduler';
+import { BASEURL } from '../utility/config';
 
 const UserDashboard = () => {
     const { isAuthenticated, userProfile } = useSelector((state) => state.user);
@@ -53,7 +54,7 @@ const UserDashboard = () => {
       created: new Date().toISOString().split('T')[0]
     };
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/create_user', userData, {
+      const response = await axios.post(`${BASEURL}/api/auth/create_user`, userData, {
         headers: {
           'Content-Type': 'application/json',
         },
@@ -88,7 +89,7 @@ const UserDashboard = () => {
   const fetchCampaigns = async () => {
     try {
      
-      const response = await axios.get('http://localhost:5000/get_campaigns');
+      const response = await axios.get(`${BASEURL}/get_campaigns`);
       
       if (response.data.success) {
         setCampaigns(response.data.data);
@@ -102,7 +103,7 @@ const UserDashboard = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/auth/users', {
+      const response = await axios.get(`${BASEURL}/api/auth/users`, {
         withCredentials: true,
       });
       const data = response.data;
@@ -122,7 +123,7 @@ const UserDashboard = () => {
 
   const deleteCampaign = async (id) => {
     try {
-        const response = await fetch(`http://localhost:5000/campaigns/${id}`, {
+        const response = await fetch(`${BASEURL}/campaigns/${id}`, {
             method: 'DELETE'
         });
         const result = await response.json();
@@ -166,7 +167,7 @@ console.log(users)
 const handleEditUser = async (userData) => {
     try {
         // Make API call to update user
-        const response = await fetch(`http://localhost:5000/api/auth/update_user/${editingUser.id}`, {
+        const response = await fetch(`${BASEURL}/api/auth/update_user/${editingUser.id}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -211,7 +212,7 @@ const handleEditUser = async (userData) => {
 
   const deleteUser = async (userId) => {
   try {
-    const response = await axios.delete(`http://localhost:5000/api/auth/users/${userId}`, {
+    const response = await axios.delete(`${BASEURL}/api/auth/users/${userId}`, {
       withCredentials: true,
     });
     console.log(response.data.message);

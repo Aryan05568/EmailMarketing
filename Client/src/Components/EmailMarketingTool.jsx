@@ -1272,6 +1272,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { X, Upload, Mail, Settings, Send, FileText, CheckCircle, AlertCircle, Clock, Plus, Eye, Image as ImageIcon } from 'lucide-react';
+import { BASEURL } from '../utility/config';
 
 export default function EmailMarketingTool() {
     const [activeStep, setActiveStep] = useState(1);
@@ -1520,7 +1521,7 @@ export default function EmailMarketingTool() {
                 }
             }, 200);
 
-            const response = await fetch(`http://localhost:5000/upload-image`, {
+            const response = await fetch(`${BASEURL}/upload-image`, {
                 method: 'POST',
                 body: formData
             });

@@ -5,6 +5,7 @@ import {
   BarChart3, PieChart, Activity, Download
 } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { BASEURL } from '../utility/config';
 
 const CampaignAnalytics = ({campaigns}) => {
   const [activeView, setActiveView] = useState('list'); // 'list' or 'analytics'
@@ -101,7 +102,7 @@ const CampaignAnalytics = ({campaigns}) => {
 
   const deleteCampaign = async (id) => {
       try {
-          const response = await fetch(`http://localhost:5000/campaigns/${id}`, {
+          const response = await fetch(`${BASEURL}/campaigns/${id}`, {
               method: 'DELETE'
           });
           const result = await response.json();

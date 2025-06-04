@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, Play, Pause, Settings, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
+import { BASEURL } from '../utility/config';
 
 const CampaignScheduler = () => {
   const [campaigns, setCampaigns] = useState([]);
@@ -18,7 +19,7 @@ const CampaignScheduler = () => {
 
   const fetchCampaigns = async () => {
     try {
-      const response = await fetch('http://localhost:5000/get_campaigns');
+      const response = await fetch(`${BASEURL}/get_campaigns`);
       const data = await response.json();
       if (data.success) {
         setCampaigns(data.data);
@@ -30,7 +31,7 @@ const CampaignScheduler = () => {
 
   const fetchSchedulePatterns = async () => {
     try {
-      const response = await fetch('http://localhost:5000/schedule-patterns');
+      const response = await fetch(`${BASEURL}/schedule-patterns`);
       const data = await response.json();
       if (data.success) {
         setSchedulePatterns(data.patterns);
@@ -47,7 +48,7 @@ const CampaignScheduler = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/validate-cron', {
+      const response = await fetch(`${BASEURL}/validate-cron`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pattern })
@@ -62,7 +63,7 @@ const CampaignScheduler = () => {
   const handleScheduleCampaign = async (campaignId, pattern) => {
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:5000/campaigns/${campaignId}/schedule`, {
+      const response = await fetch(`${BASEURL}/campaigns/${campaignId}/schedule`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ schedulePattern: pattern })
@@ -85,7 +86,7 @@ const CampaignScheduler = () => {
   const handleUnscheduleCampaign = async (campaignId) => {
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:5000/campaigns/${campaignId}/schedule`, {
+      const response = await fetch(`${BASEURL}/campaigns/${campaignId}/schedule`, {
         method: 'DELETE'
       });
       
@@ -105,7 +106,7 @@ const CampaignScheduler = () => {
   const handleExecuteNow = async (campaignId) => {
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:5000/campaigns/${campaignId}/execute-now`, {
+      const response = await fetch(`${BASEURL}/campaigns/${campaignId}/execute-now`, {
         method: 'POST'
       });
       
