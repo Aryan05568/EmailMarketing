@@ -2,7 +2,7 @@ import React from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { getProfile, setAuthentication } from '../redux/userSlice';
 import { toast } from 'react-toastify';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Header = () => {
 
@@ -45,11 +45,11 @@ const Header = () => {
             </div>
           ) : (
             // Logged out state
-            <a href="/login">
+            <Link to="/login">
               <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium">
                 Sign In
               </button>
-            </a>
+            </Link>
           )}
         </div>
       </div>

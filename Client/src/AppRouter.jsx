@@ -7,6 +7,8 @@ import { ToastContainer } from 'react-toastify'
 import EmailMarketingTool from './Components/EmailMarketingTool'
 import Header from './Components/Header'
 import UserDashboard from './Components/UserDashboard'
+import TermsAndConditions from './Components/TermsAndConditions'
+import PrivacyPolicy from './Components/PrivacyPolicy'
 
 // Create a separate component for the app content
 function AppRouter() {
@@ -16,7 +18,9 @@ function AppRouter() {
   const routesWithoutNavbar = [
     '/',
     '/login',
-    '/dashboard'
+    '/dashboard',
+    '/email-tool',
+    '/user-dashboard'
   ];
 
   // Check if current path should have navbar
@@ -25,13 +29,15 @@ function AppRouter() {
   return (
     <>
       <ToastContainer />
-      {/* {shouldShowNavbar && <Header />} */}
+      {shouldShowNavbar && <Header />}
       <Routes>
         <Route path="/" element={<MainPage />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/login" element={<Login />} />
         <Route path="/email-tool" element={<EmailMarketingTool />} />
         <Route path='/user-dashboard' element={<UserDashboard/>}/>
+        <Route path='/terms' element={<TermsAndConditions/>}/>
+        <Route path='/privacy' element={<PrivacyPolicy/>}/>
       </Routes>
     </>
   );

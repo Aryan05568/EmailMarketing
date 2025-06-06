@@ -1336,14 +1336,14 @@ export default function EmailMarketingTool() {
     const [imageProgress, setImageProgress] = useState({});
     const [showImageManager, setShowImageManager] = useState(false);
     const [draggedImage, setDraggedImage] = useState(null);
+    const [excelPublicId, setExcelPublicId] = useState('');
 
     // File input refs
     const excelFileRef = useRef(null);
     const templateFileRef = useRef(null);
     const imageFileRef = useRef(null);
 
-    // Backend API base URL (adjust as needed)
-    const API_BASE = 'http://localhost:5000';
+
 
     // Handle Excel file selection
     const handleExcelFileChange = (e) => {
@@ -1402,74 +1402,7 @@ export default function EmailMarketingTool() {
         e.target.value = '';
     };
 
-    // const uploadImage = async (file) => {
-    //     const imageId = Date.now() + Math.random();
-
-    //     // Add image to state with loading status
-    //     const newImage = {
-    //         id: imageId,
-    //         name: file.name,
-    //         file: file,
-    //         url: null,
-    //         uploading: true,
-    //         progress: 0
-    //     };
-
-    //     setUploadedImages(prev => [...prev, newImage]);
-
-    //     const formData = new FormData();
-    //     formData.append('image', file);
-
-    //     try {
-    //         // Simulate progress
-    //         let progress = 0;
-    //         const interval = setInterval(() => {
-    //             progress += 20;
-    //             setImageProgress(prev => ({
-    //                 ...prev,
-    //                 [imageId]: progress
-    //             }));
-    //             if (progress >= 80) {
-    //                 clearInterval(interval);
-    //             }
-    //         }, 200);
-
-    //         const response = await fetch(`http://localhost:5000/upload-image`, {
-    //             method: 'POST',
-    //             body: formData
-    //         });
-
-    //         const result = await response.json();
-
-    //         if (result.success) {
-    //             // Complete progress
-    //             setImageProgress(prev => ({
-    //                 ...prev,
-    //                 [imageId]: 100
-    //             }));
-
-    //             // Update image with URL
-    //             setUploadedImages(prev => 
-    //                 prev.map(img => 
-    //                     img.id === imageId 
-    //                         ? { ...img, url: result.imageUrl, uploading: false }
-    //                         : img
-    //                 )
-    //             );
-    //         } else {
-    //             throw new Error(result.message || 'Failed to upload image');
-    //         }
-    //     } catch (error) {
-    //         alert('Error uploading image: ' + error.message);
-    //         // Remove failed image
-    //         setUploadedImages(prev => prev.filter(img => img.id !== imageId));
-    //         setImageProgress(prev => {
-    //             const newProgress = { ...prev };
-    //             delete newProgress[imageId];
-    //             return newProgress;
-    //         });
-    //     }
-    // };
+    
 
     const removeImage = (imageId) => {
         setUploadedImages(prev => prev.filter(img => img.id !== imageId));
@@ -1528,6 +1461,8 @@ export default function EmailMarketingTool() {
 
             const result = await response.json();
 
+            console.log(result)
+
             if (result.success) {
                 // Complete progress
                 setImageProgress(prev => ({
@@ -1578,7 +1513,8 @@ export default function EmailMarketingTool() {
 
         // Use CID reference for email compatibility
         // The actual filename will be used as CID by the backend
-        const imageTag = `<img src="cid:${cidName}" alt="${imageName}" style="max-width: 100%; height: auto;" />`;
+        // const imageTag = `<img src="cid:${cidName}" alt="${imageName}" style="max-width: 100%; height: auto;" />`;
+        const imageTag = `<img src="${imageUrl}" alt="${imageName}" style="max-width: 100%; height: auto;" />`;
 
         if (activeTemplateTab === 'paste') {
             const textarea = document.getElementById('template-content');
@@ -1597,81 +1533,6 @@ export default function EmailMarketingTool() {
             }, 0);
         }
     };
-    // const insertImageIntoTemplate = (imageUrl, imageName, base64Data) => {
-    //     console.log("inserted");
-
-    //     // Use base64 data for email compatibility
-    //     // const imageTag = `<img src="${base64Data}" alt="${imageName}" style="max-width: 100%; height: auto;" />`;
-    //     imageTag = `<img src="cid:${imageName}" alt="${imageName}" style="max-width: 100%; height: auto;" />`;
-
-    //     if (activeTemplateTab === 'paste') {
-    //         const textarea = document.getElementById('template-content');
-    //         const start = textarea.selectionStart;
-    //         const end = textarea.selectionEnd;
-    //         const text = templateContent;
-    //         const before = text.substring(0, start);
-    //         const after = text.substring(end, text.length);
-
-    //         setTemplateContent(before + imageTag + after);
-
-    //         // Set cursor position after inserted image
-    //         setTimeout(() => {
-    //             textarea.selectionStart = textarea.selectionEnd = start + imageTag.length;
-    //             textarea.focus();
-    //         }, 0);
-    //     }
-    // };
-
-
-    //  const insertImageIntoTemplate = (imageUrl, imageName) => {
-    //     console.log("inserted")
-    //     const imageTag = `<img src="${imageUrl}" alt="${imageName}" style="max-width: 100%; height: auto;" />`;
-
-    //     if (activeTemplateTab === 'paste') {
-    //         const textarea = document.getElementById('template-content');
-    //         const start = textarea.selectionStart;
-    //         const end = textarea.selectionEnd;
-    //         const text = templateContent;
-    //         const before = text.substring(0, start);
-    //         const after = text.substring(end, text.length);
-
-    //         setTemplateContent(before + imageTag + after);
-
-    //         // Set cursor position after inserted image
-    //         setTimeout(() => {
-    //             textarea.selectionStart = textarea.selectionEnd = start + imageTag.length;
-    //             textarea.focus();
-    //         }, 0);
-    //     }
-    // };
-
-    //     const insertImageIntoTemplate = (imageUrl, imageName) => {
-    //     console.log("inserted");
-
-    //     // Make sure URL is absolute for email compatibility
-    //     const absoluteUrl = imageUrl.startsWith('http') 
-    //         ? imageUrl 
-    //         : `${window.location.origin}${imageUrl}`;
-
-    //     const imageTag = `<img src="${absoluteUrl}" alt="${imageName}" style="max-width: 100%; height: auto;" />`;
-
-    //     if (activeTemplateTab === 'paste') {
-    //         const textarea = document.getElementById('template-content');
-    //         const start = textarea.selectionStart;
-    //         const end = textarea.selectionEnd;
-    //         const text = templateContent;
-    //         const before = text.substring(0, start);
-    //         const after = text.substring(end, text.length);
-
-    //         setTemplateContent(before + imageTag + after);
-
-    //         // Set cursor position after inserted image
-    //         setTimeout(() => {
-    //             textarea.selectionStart = textarea.selectionEnd = start + imageTag.length;
-    //             textarea.focus();
-    //         }, 0);
-    //     }
-    // };
 
 
     // Handle tab switching
@@ -1704,6 +1565,8 @@ export default function EmailMarketingTool() {
 
             const result = await response.json();
 
+            console.log(result)
+
             if (result.success) {
                 // Complete progress
                 setExcelProgress(100);
@@ -1712,7 +1575,8 @@ export default function EmailMarketingTool() {
                 setExcelData(result);
                 setTotalRows(result.totalRows);
                 setRecipientCount(result.totalRows);
-                setExcelFilePath(result.filePath);
+                setExcelFilePath(result.cloudinaryUrl);
+                setExcelPublicId(result.cloudinaryPublicId)
 
                 // Set preview
                 setExcelPreview({
@@ -1962,66 +1826,130 @@ export default function EmailMarketingTool() {
     //     }
     // };
 
-    console.log(templateContent)
+   
+    // const startSending = async () => {
+    //     try {
+    //         // Create FormData object
+    //         const formData = new FormData();
+
+    //         // Append the Excel file
+    //         formData.append('excel', excelFilePath);
+
+    //         // If using template file, append it; otherwise, send template content as text
+    //         if (templateFile) {
+    //             formData.append('template', templateFile);
+    //         }
+
+    //         // Append all other data as form fields
+    //         formData.append('templateContent', templateContent); // Send template content separately
+    //         formData.append('emailColumn', selectedEmailColumn);
+    //         formData.append('nameColumn', selectedNameColumn);
+    //         formData.append('subjectLine', subjectLine);
+    //         formData.append('smtpServer', smtpServer);
+    //         formData.append('smtpPort', smtpPort);
+    //         formData.append('emailUser', emailUser);
+    //         formData.append('emailPass', emailPass);
+    //         formData.append('senderName', senderName);
+    //         formData.append('campaign_name', campaignName);
+    //         formData.append('delayBetweenEmails', delayBetweenEmails);
+
+    //         // Handle variableMappings object - convert to JSON string
+    //         formData.append('variables', JSON.stringify(variableMappings));
+
+    //         const response = await fetch(`http://localhost:5000/campaign`, {
+    //             method: 'POST',
+    //             body: formData
+    //         });
+
+    //         const result = await response.json();
+
+    //         if (result.success) {
+    //             setCurrentJobId(result.jobId);
+    //             setIsSending(true);
+    //             setSendingComplete(false);
+    //             setSentCount(0);
+    //             setFailedCount(0);
+    //             setRemainingCount(result.total);
+    //             setSendingProgress(0);
+    //             setSendingLogs([]);
+
+    //             // Start polling for status
+    //             const interval = setInterval(() => {
+    //                 checkSendingStatus(result.jobId);
+    //             }, 2000);
+
+    //             setStatusInterval(interval);
+    //         } else {
+    //             throw new Error(result.message || 'Failed to start sending');
+    //         }
+    //     } catch (error) {
+    //         alert('Error starting email send: ' + error.message);
+    //     }
+    // };
+
     const startSending = async () => {
-        try {
-            // Create FormData object
-            const formData = new FormData();
+    try {
+        // Create FormData object
+        const formData = new FormData();
 
-            // Append the Excel file
-            formData.append('excel', excelFile);
+        // Since excelFilePath now contains Cloudinary URL, send it as a regular field
+        // Don't append the file, send the Cloudinary URL and public ID instead
+        formData.append('excelCloudinaryUrl', excelFilePath); // Cloudinary URL
+        formData.append('excelPublicId', excelPublicId); // Cloudinary public ID
 
-            // If using template file, append it; otherwise, send template content as text
-            if (templateFile) {
-                formData.append('template', templateFile);
-            }
-
-            // Append all other data as form fields
-            formData.append('templateContent', templateContent); // Send template content separately
-            formData.append('emailColumn', selectedEmailColumn);
-            formData.append('nameColumn', selectedNameColumn);
-            formData.append('subjectLine', subjectLine);
-            formData.append('smtpServer', smtpServer);
-            formData.append('smtpPort', smtpPort);
-            formData.append('emailUser', emailUser);
-            formData.append('emailPass', emailPass);
-            formData.append('senderName', senderName);
-            formData.append('campaign_name', campaignName);
-            formData.append('delayBetweenEmails', delayBetweenEmails);
-
-            // Handle variableMappings object - convert to JSON string
-            formData.append('variables', JSON.stringify(variableMappings));
-
-            const response = await fetch(`${BASEURL}/campaign`, {
-                method: 'POST',
-                body: formData
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                setCurrentJobId(result.jobId);
-                setIsSending(true);
-                setSendingComplete(false);
-                setSentCount(0);
-                setFailedCount(0);
-                setRemainingCount(result.total);
-                setSendingProgress(0);
-                setSendingLogs([]);
-
-                // Start polling for status
-                const interval = setInterval(() => {
-                    checkSendingStatus(result.jobId);
-                }, 2000);
-
-                setStatusInterval(interval);
-            } else {
-                throw new Error(result.message || 'Failed to start sending');
-            }
-        } catch (error) {
-            alert('Error starting email send: ' + error.message);
+        // If using template file, send Cloudinary info; otherwise, send template content as text
+        if (templateFile && templateFilePath) {
+            formData.append('templateCloudinaryUrl', templateFilePath); // Cloudinary URL
+            formData.append('templatePublicId', templatePublicId); // Cloudinary public ID
         }
-    };
+
+        // Append all other data as form fields
+        formData.append('templateContent', templateContent); // Send template content separately
+        formData.append('emailColumn', selectedEmailColumn);
+        formData.append('nameColumn', selectedNameColumn);
+        formData.append('subjectLine', subjectLine);
+        formData.append('smtpServer', smtpServer);
+        formData.append('smtpPort', smtpPort);
+        formData.append('emailUser', emailUser);
+        formData.append('emailPass', emailPass);
+        formData.append('senderName', senderName);
+        formData.append('campaign_name', campaignName);
+        formData.append('delayBetweenEmails', delayBetweenEmails);
+
+        // Handle variableMappings object - convert to JSON string
+        formData.append('variables', JSON.stringify(variableMappings));
+
+        const response = await fetch(`${BASEURL}/campaign`, {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            setCurrentJobId(result.jobId);
+            setIsSending(true);
+            setSendingComplete(false);
+            setSentCount(0);
+            setFailedCount(0);
+            setRemainingCount(result.total);
+            setSendingProgress(0);
+            setSendingLogs([]);
+
+            // Start polling for status
+            const interval = setInterval(() => {
+                checkSendingStatus(result.jobId);
+            }, 2000);
+
+            setStatusInterval(interval);
+        } else {
+            throw new Error(result.message || 'Failed to start sending');
+        }
+    } catch (error) {
+        console.error('Campaign start error:', error);
+        alert('Error starting email send: ' + error.message);
+    }
+};
 
 
 
@@ -2598,8 +2526,8 @@ export default function EmailMarketingTool() {
                                                     <div className="absolute bottom-2 left-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                         <button
                                                             onClick={() => insertImageIntoTemplate(
-                                                                image.url || image.base64,
-                                                                image.name,
+                                                                image.url,
+                                                                image.filename,
                                                                 image.base64,
                                                                 image.cidName || image.filename?.split('.')[0] || image.name.split('.')[0]
                                                             )}

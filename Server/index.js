@@ -1,6 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
+const cloudinary = require('cloudinary').v2;
 const xlsx = require('xlsx');
 const fs = require('fs');
 const nodemailer = require('nodemailer');
@@ -9,6 +10,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const supabase = require('./config/supabase_client');
 const authRoutes = require('./route/route');
+// const fetch = require('node-fetch');
 const { previewExcel } = require('./services/excelservice');
 const { parseHtmlTemplate } = require('./services/templateservice');
 const { testSMTPConnection } = require('./services/smtpservice');
@@ -63,15 +65,7 @@ dirs.forEach(dir => {
 });
 
 // Configure storage
-// const storage = multer.diskStorage({
-//     destination: (req, file, cb) => {
-//         const dest = file.fieldname === 'excel' ? 'uploads/excel/' : 'uploads/html/';
-//         cb(null, dest);
-//     },
-//     filename: (req, file, cb) => {
-//         cb(null, Date.now() + '-' + file.originalname);
-//     }
-// });
+
 
 campaignScheduler.setActiveSendingJobs(activeSendingJobs);
 
@@ -95,36 +89,26 @@ const storage = multer.diskStorage({
     }
 });
 
-const upload = multer({
-    storage,
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+const upload = multer({ 
+    dest: 'temp/', // Temporary folder for processing
     limits: {
         fileSize: 10 * 1024 * 1024 // 10MB limit
-    },
-    fileFilter: (req, file, cb) => {
-        if (file.fieldname === 'excel') {
-            if (file.mimetype.includes('spreadsheet') || file.originalname.match(/\.(xlsx|xls)$/)) {
-                cb(null, true);
-            } else {
-                cb(new Error('Only Excel files are allowed'), false);
-            }
-        } else if (file.fieldname === 'template') {
-            if (file.mimetype === 'text/html' || file.originalname.match(/\.(html|htm)$/)) {
-                cb(null, true);
-            } else {
-                cb(new Error('Only HTML files are allowed'), false);
-            }
-        } else if (file.fieldname === 'image') {
-            if (file.mimetype.startsWith('image/') || file.originalname.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i)) {
-                cb(null, true);
-            } else {
-                cb(new Error('Only image files are allowed'), false);
-            }
-        } else {
-            cb(new Error('Invalid field name. Allowed fields: excel, template, image'), false);
-        }
     }
 });
 
+const uploadFormData = multer({
+    storage: multer.memoryStorage(), // No file storage needed since you're sending URLs
+    limits: {
+        fieldSize: 2 * 1024 * 1024, // 2MB per field
+        fields: 50 // Maximum number of fields
+    }
+});
 // const upload = multer({
 //     storage,
 //     limits: {
@@ -143,11 +127,18 @@ const upload = multer({
 //             } else {
 //                 cb(new Error('Only HTML files are allowed'), false);
 //             }
+//         } else if (file.fieldname === 'image') {
+//             if (file.mimetype.startsWith('image/') || file.originalname.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i)) {
+//                 cb(null, true);
+//             } else {
+//                 cb(new Error('Only image files are allowed'), false);
+//             }
 //         } else {
-//             cb(new Error('Invalid field name'), false);
+//             cb(new Error('Invalid field name. Allowed fields: excel, template, image'), false);
 //         }
 //     }
 // });
+
 
 
 // Serve the HTML file (if you want to serve it from backend)
@@ -167,10 +158,8 @@ app.get('/health', (req, res) => {
 
 
 
-app.post('/preview-excel', upload.single('excel'), (req, res) => {
-    //neww
+app.post('/preview-excel', upload.single('excel'), async (req, res) => {
     try {
-
         if (!req.file) {
             return res.status(400).json({
                 success: false,
@@ -178,24 +167,119 @@ app.post('/preview-excel', upload.single('excel'), (req, res) => {
             });
         }
 
-        const excelPath = req.file.path;
-        const result = previewExcel(excelPath);
+        // Process Excel file first
+        const excelData = previewExcel(req.file.path);
+
+        console.log(req.file.path, 'Excel file processed successfully');
+
+        // Upload to Cloudinary
+        const cloudinaryResult = await uploadToCloudinary(
+            req.file.path, 
+            'uploads/excel', 
+            'raw' // For Excel files
+        );
+
+        // Clean up temporary file
+        cleanupTempFile(req.file.path);
 
         res.json({
             success: true,
-            headers: result.headers,
-            sample: result.sample,
-            totalRows: result.totalRows,
-            filePath: excelPath
+            headers: excelData.headers,
+            sample: excelData.sample,
+            totalRows: excelData.totalRows,
+            cloudinaryUrl: cloudinaryResult.secure_url,
+            cloudinaryPublicId: cloudinaryResult.public_id,
+            originalName: req.file.originalname
         });
-    } catch (err) {
-        console.error('Error processing Excel file:', err);
+
+    } catch (error) {
+        // Clean up temporary file in case of error
+        if (req.file) {
+            cleanupTempFile(req.file.path);
+        }
+
+        console.error('Excel upload error:', error);
         res.status(500).json({
             success: false,
-            message: err.message || 'Error processing Excel file'
+            message: error.message || 'Error processing Excel file'
         });
     }
 });
+
+app.post('/upload-template', upload.single('template'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({
+                success: false,
+                message: 'No template file uploaded'
+            });
+        }
+
+        // Parse HTML template first (before uploading)
+        const template = parseHtmlTemplate(req.file.path);
+
+        // Upload to Cloudinary
+        const cloudinaryResult = await uploadToCloudinary(
+            req.file.path, 
+            'uploads/templates', 
+            'raw' // For HTML files
+        );
+
+        // Clean up temporary file
+        cleanupTempFile(req.file.path);
+
+        res.json({
+            success: true,
+            cloudinaryUrl: cloudinaryResult.secure_url,
+            cloudinaryPublicId: cloudinaryResult.public_id,
+            template: template,
+            originalName: req.file.originalname
+        });
+
+    } catch (error) {
+        // Clean up temporary file in case of error
+        if (req.file) {
+            cleanupTempFile(req.file.path);
+        }
+
+        console.error('Template upload error:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Error processing HTML template'
+        });
+    }
+});
+
+
+// app.post('/preview-excel', upload.single('excel'), (req, res) => {
+//     //neww
+//     try {
+
+//         if (!req.file) {
+//             return res.status(400).json({
+//                 success: false,
+//                 message: 'No Excel file uploaded'
+//             });
+//         }
+
+//         const excelPath = req.file.path;
+//         const result = previewExcel(excelPath);
+
+//         res.json({
+//             success: true,
+//             headers: result.headers,
+//             sample: result.sample,
+//             totalRows: result.totalRows,
+//             filePath: excelPath
+//         });
+//     } catch (err) {
+//         console.error('Error processing Excel file:', err);
+//         res.status(500).json({
+//             success: false,
+//             message: err.message || 'Error processing Excel file'
+//         });
+//     }
+// });
 
 
 
@@ -204,32 +288,32 @@ app.post('/preview-excel', upload.single('excel'), (req, res) => {
 
 
 
-app.post('/upload-template', upload.single('template'), (req, res) => {
-    try { //neww
-        if (!req.file) {
-            return res.status(400).json({
-                success: false,
-                message: 'No template file uploaded'
-            });
-        }
+// app.post('/upload-template', upload.single('template'), (req, res) => {
+//     try { //neww
+//         if (!req.file) {
+//             return res.status(400).json({
+//                 success: false,
+//                 message: 'No template file uploaded'
+//             });
+//         }
 
-        const htmlPath = req.file.path;
-        const template = parseHtmlTemplate(htmlPath);
+//         const htmlPath = req.file.path;
+//         const template = parseHtmlTemplate(htmlPath);
 
-        res.json({
-            success: true,
-            filePath: htmlPath,
-            template
-        });
-    } catch (err) {
-        console.error('Error processing HTML template:', err);
-        res.status(500).json({
-            success: false,
-            message: 'Error processing HTML template',
-            error: err.message
-        });
-    }
-});
+//         res.json({
+//             success: true,
+//             filePath: htmlPath,
+//             template
+//         });
+//     } catch (err) {
+//         console.error('Error processing HTML template:', err);
+//         res.status(500).json({
+//             success: false,
+//             message: 'Error processing HTML template',
+//             error: err.message
+//         });
+//     }
+// });
 
 
 
@@ -503,38 +587,40 @@ app.post('/send', async(req, res) => {
 //     }
 // });
 
+async function downloadFromCloudinaryToTemp(url, filename) {
+    
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(`Failed to download file from Cloudinary: ${response.statusText}`);
+    }
+    
+    // const buffer = await response.buffer();
+    const buffer = Buffer.from(await response.arrayBuffer());
+    const tempPath = path.join(__dirname, 'temp', filename);
+    
+    // Ensure temp directory exists
+    const tempDir = path.dirname(tempPath);
+    if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true });
+    }
+    
+    fs.writeFileSync(tempPath, buffer);
+    return tempPath;
+}
 
-app.post('/campaign', upload.fields([
-    { name: 'excel', maxCount: 1 },
-    { name: 'template', maxCount: 1 }
-]), async(req, res) => {
+app.post('/campaign',uploadFormData.none(), async (req, res) => {
+    let tempExcelPath = null;
+    let tempTemplatePath = null;
+
+    console.log(req.body)
+    
     try {
-        // Check if Excel file exists
-        if (!req.files || !req.files.excel || !req.files.excel[0]) {
-            return res.status(400).json({
-                success: false,
-                message: 'Excel file is required'
-            });
-        }
-
-        const excelFile = req.files.excel[0];
-        const templateFile = req.files && req.files.template && req.files.template[0];
-
-        // 1. Preview Excel data
-        let excelPreview;
-        try {
-            excelPreview = previewExcel(excelFile.path);
-        } catch (error) {
-            logError('Excel Preview', error, { filePath: excelFile.path });
-            return res.status(400).json({
-                success: false,
-                message: 'Invalid Excel file format',
-                error: error.message
-            });
-        }
-
-        // 2. Extract and validate values from body
+        // Extract Cloudinary URLs and other data from form
         const {
+            excelCloudinaryUrl,
+            excelPublicId,
+            templateCloudinaryUrl,
+            templatePublicId,
             emailColumn,
             nameColumn,
             subjectLine,
@@ -552,10 +638,18 @@ app.post('/campaign', upload.fields([
         console.log('Received campaign request:', {
             campaign_name,
             emailColumn,
-            totalRecipients: excelPreview?.length || 0
+            excelCloudinaryUrl,
+            templateCloudinaryUrl
         });
 
         // Validate required fields
+        if (!excelCloudinaryUrl) {
+            return res.status(400).json({
+                success: false,
+                message: 'Excel file URL is required'
+            });
+        }
+
         try {
             validateEmailConfig({ emailColumn, subjectLine });
         } catch (error) {
@@ -565,19 +659,49 @@ app.post('/campaign', upload.fields([
             });
         }
 
-        // 3. Use template content or uploaded template file
+        // 1. Download Excel file from Cloudinary to temporary location for processing
+        try {
+            const excelFileName = `excel_${Date.now()}.xlsx`;
+            tempExcelPath = await downloadFromCloudinaryToTemp(excelCloudinaryUrl, excelFileName);
+            console.log('Excel file downloaded to:', tempExcelPath);
+        } catch (error) {
+            logError('Excel Download', error, { url: excelCloudinaryUrl });
+            return res.status(400).json({
+                success: false,
+                message: 'Failed to download Excel file from cloud storage',
+                error: error.message
+            });
+        }
+
+        // 2. Preview Excel data using temporary file
+        let excelPreview;
+        try {
+            excelPreview = previewExcel(tempExcelPath);
+        } catch (error) {
+            logError('Excel Preview', error, { filePath: tempExcelPath });
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid Excel file format',
+                error: error.message
+            });
+        }
+
+        // 3. Handle template - either from Cloudinary or from content
         let finalTemplateContent = '';
         
         if (templateContent && typeof templateContent === 'string' && templateContent.trim() !== '') {
             finalTemplateContent = templateContent.trim();
-        } else if (templateFile && templateFile.path) {
+        } else if (templateCloudinaryUrl) {
             try {
-                finalTemplateContent = parseHtmlTemplate(templateFile.path);
+                // Download template file from Cloudinary
+                const templateFileName = `template_${Date.now()}.html`;
+                tempTemplatePath = await downloadFromCloudinaryToTemp(templateCloudinaryUrl, templateFileName);
+                finalTemplateContent = parseHtmlTemplate(tempTemplatePath);
             } catch (error) {
-                logError('Template Parsing', error, { filePath: templateFile.path });
+                logError('Template Download/Parse', error, { url: templateCloudinaryUrl });
                 return res.status(400).json({
                     success: false,
-                    message: 'Failed to parse HTML template',
+                    message: 'Failed to download or parse HTML template',
                     error: error.message
                 });
             }
@@ -588,12 +712,14 @@ app.post('/campaign', upload.fields([
             });
         }
 
-        // 4. Save campaign to Supabase
+        // 4. Save campaign to Supabase with Cloudinary URLs
         const { data: campaignData, error: campaignError } = await supabase
             .from('campaigns')
             .insert([{
-                excel_path: excelFile.path,
-                html_path: templateFile ? templateFile.path : null,
+                excel_path: excelCloudinaryUrl, // Store Cloudinary URL instead of local path
+                excel_public_id: excelPublicId, // Store public ID for reference
+                html_path: templateCloudinaryUrl || null, // Store Cloudinary URL
+                // html_public_id: templatePublicId || null, // Store public ID
                 email_column: emailColumn,
                 name_column: nameColumn,
                 subject_line: subjectLine,
@@ -624,7 +750,6 @@ app.post('/campaign', upload.fields([
             await createConfigurationSet(configSetName);
         } catch (configError) {
             logError('Configuration Set Creation', configError, { configSetName });
-            // Continue even if config set creation fails - email can still be sent
             console.warn('Continuing without configuration set due to error:', configError.message);
         }
 
@@ -634,7 +759,7 @@ app.post('/campaign', upload.fields([
             .update({ 
                 configuration_set: configSetName,
                 status: 'sending',
-                created_at: new Date().toISOString()
+                updated_at: new Date().toISOString()
             })
             .eq('id', campaignData.id);
 
@@ -645,14 +770,14 @@ app.post('/campaign', upload.fields([
         // 7. START EMAIL SENDING WITH TRACKING
         let recipients = [];
         try {
-            const recipientsRaw = readExcelData(excelFile.path);
+            const recipientsRaw = readExcelData(tempExcelPath); // Use temp file for processing
             recipients = filterValidRecipients(recipientsRaw, emailColumn);
             
             if (recipients.length === 0) {
                 throw new Error('No valid email addresses found in the Excel file');
             }
         } catch (error) {
-            logError('Recipients Processing', error, { excelPath: excelFile.path });
+            logError('Recipients Processing', error, { excelPath: tempExcelPath });
             return res.status(400).json({
                 success: false,
                 message: 'Failed to process recipients',
@@ -694,13 +819,11 @@ app.post('/campaign', upload.fields([
             transporter,
             delayBetweenEmails: parseInt(delayBetweenEmails),
             activeSendingJobs,
-            uploadsPath: './uploads/images/',
+            uploadsPath: './uploads/images/', // You might want to change this to use Cloudinary URLs
             campaignId: campaignData.id,
             configurationSet: configSetName,
-           
         }).catch(error => {
             logError('Email Sending Job', error, { jobId, campaignId: campaignData.id });
-            // Update job status
             const jobData = activeSendingJobs.get(jobId);
             if (jobData) {
                 jobData.error = error.message;
@@ -731,8 +854,259 @@ app.post('/campaign', upload.fields([
             message: 'Error creating campaign',
             error: err.message
         });
+    } finally {
+        // Clean up temporary files
+        if (tempExcelPath && fs.existsSync(tempExcelPath)) {
+            try {
+                fs.unlinkSync(tempExcelPath);
+                console.log('Cleaned up temp Excel file:', tempExcelPath);
+            } catch (cleanupError) {
+                console.error('Error cleaning up temp Excel file:', cleanupError);
+            }
+        }
+        
+        if (tempTemplatePath && fs.existsSync(tempTemplatePath)) {
+            try {
+                fs.unlinkSync(tempTemplatePath);
+                console.log('Cleaned up temp template file:', tempTemplatePath);
+            } catch (cleanupError) {
+                console.error('Error cleaning up temp template file:', cleanupError);
+            }
+        }
     }
 });
+
+
+// app.post('/campaign', upload.fields([
+//     { name: 'excel', maxCount: 1 },
+//     { name: 'template', maxCount: 1 }
+// ]), async(req, res) => {
+//     try {
+//         // Check if Excel file exists
+//         // if (!req.files || !req.files.excel || !req.files.excel[0]) {
+//         //     return res.status(400).json({
+//         //         success: false,
+//         //         message: 'Excel file is required'
+//         //     });
+//         // }
+
+//         const excelFile = req.files
+//         console.log(excelFile)
+//         const templateFile = req.files && req.files.template && req.files.template[0];
+
+//         // 1. Preview Excel data
+//         let excelPreview;
+//         try {
+//             excelPreview = previewExcel(excelFile.path);
+//         } catch (error) {
+//             logError('Excel Preview', error, { filePath: excelFile.path });
+//             return res.status(400).json({
+//                 success: false,
+//                 message: 'Invalid Excel file format',
+//                 error: error.message
+//             });
+//         }
+
+//         // 2. Extract and validate values from body
+//         const {
+//             emailColumn,
+//             nameColumn,
+//             subjectLine,
+//             smtpServer,
+//             smtpPort,
+//             emailUser,
+//             emailPass,
+//             senderName,
+//             variables,
+//             delayBetweenEmails = 2000,
+//             templateContent,
+//             campaign_name
+//         } = req.body;
+
+//         console.log('Received campaign request:', {
+//             campaign_name,
+//             emailColumn,
+//             totalRecipients: excelPreview?.length || 0
+//         });
+
+//         // Validate required fields
+//         try {
+//             validateEmailConfig({ emailColumn, subjectLine });
+//         } catch (error) {
+//             return res.status(400).json({
+//                 success: false,
+//                 message: error.message
+//             });
+//         }
+
+//         // 3. Use template content or uploaded template file
+//         let finalTemplateContent = '';
+        
+//         if (templateContent && typeof templateContent === 'string' && templateContent.trim() !== '') {
+//             finalTemplateContent = templateContent.trim();
+//         } else if (templateFile && templateFile.path) {
+//             try {
+//                 finalTemplateContent = parseHtmlTemplate(templateFile.path);
+//             } catch (error) {
+//                 logError('Template Parsing', error, { filePath: templateFile.path });
+//                 return res.status(400).json({
+//                     success: false,
+//                     message: 'Failed to parse HTML template',
+//                     error: error.message
+//                 });
+//             }
+//         } else {
+//             return res.status(400).json({
+//                 success: false,
+//                 message: 'Either template content or template file is required'
+//             });
+//         }
+
+//         // 4. Save campaign to Supabase
+//         const { data: campaignData, error: campaignError } = await supabase
+//             .from('campaigns')
+//             .insert([{
+//                 excel_path: excelFile.path,
+//                 html_path: templateFile ? templateFile.path : null,
+//                 email_column: emailColumn,
+//                 name_column: nameColumn,
+//                 subject_line: subjectLine,
+//                 smtp_server: smtpServer || 'email-smtp.ap-south-1.amazonaws.com',
+//                 smtp_port: smtpPort || 587,
+//                 email_user: emailUser,
+//                 email_pass: emailPass,
+//                 sender_name: senderName,
+//                 variables: typeof variables === 'string' ? variables : JSON.stringify(variables || []),
+//                 delay_between_emails: parseInt(delayBetweenEmails),
+//                 template: finalTemplateContent,
+//                 campaign_name: campaign_name,
+//                 status: 'pending',
+//                 created_at: new Date().toISOString()
+//             }])
+//             .select()
+//             .single();
+
+//         if (campaignError) {
+//             logError('Campaign Creation', campaignError);
+//             throw new Error(`Failed to create campaign: ${campaignError.message}`);
+//         }
+
+//         // 5. CREATE SES CONFIGURATION SET FOR TRACKING
+//         const configSetName = `campaign-${campaignData.id}-tracking`;
+        
+//         try {
+//             await createConfigurationSet(configSetName);
+//         } catch (configError) {
+//             logError('Configuration Set Creation', configError, { configSetName });
+//             // Continue even if config set creation fails - email can still be sent
+//             console.warn('Continuing without configuration set due to error:', configError.message);
+//         }
+
+//         // 6. Update campaign with configuration set name
+//         const { error: updateError } = await supabase
+//             .from('campaigns')
+//             .update({ 
+//                 configuration_set: configSetName,
+//                 status: 'sending',
+//                 created_at: new Date().toISOString()
+//             })
+//             .eq('id', campaignData.id);
+
+//         if (updateError) {
+//             logError('Campaign Update', updateError, { campaignId: campaignData.id });
+//         }
+
+//         // 7. START EMAIL SENDING WITH TRACKING
+//         let recipients = [];
+//         try {
+//             const recipientsRaw = readExcelData(excelFile.path);
+//             recipients = filterValidRecipients(recipientsRaw, emailColumn);
+            
+//             if (recipients.length === 0) {
+//                 throw new Error('No valid email addresses found in the Excel file');
+//             }
+//         } catch (error) {
+//             logError('Recipients Processing', error, { excelPath: excelFile.path });
+//             return res.status(400).json({
+//                 success: false,
+//                 message: 'Failed to process recipients',
+//                 error: error.message
+//             });
+//         }
+
+//         // Create transporter
+//         const transporter = createTransporter({ 
+//             delayBetweenEmails: parseInt(delayBetweenEmails),
+//             configurationSet: configSetName
+//         });
+
+//         const jobId = `campaign-${campaignData.id}`;
+//         const jobInfo = {
+//             id: jobId,
+//             campaignId: campaignData.id,
+//             total: recipients.length,
+//             sentEmails: 0,
+//             failedEmails: 0,
+//             shouldStop: false,
+//             completed: false,
+//             startedAt: new Date().toISOString()
+//         };
+        
+//         // Store job info in your tracking system
+//         activeSendingJobs.set(jobId, jobInfo);
+
+//         // Start sending with tracking (non-blocking)
+//         sendEmailsJob({
+//             jobId,
+//             recipients,
+//             emailColumn,
+//             nameColumn,
+//             subjectLine,
+//             senderName,
+//             templateContent: finalTemplateContent,
+//             variables: Array.isArray(variables) ? variables : JSON.parse(variables || '[]'),
+//             transporter,
+//             delayBetweenEmails: parseInt(delayBetweenEmails),
+//             activeSendingJobs,
+//             uploadsPath: './uploads/images/',
+//             campaignId: campaignData.id,
+//             configurationSet: configSetName,
+           
+//         }).catch(error => {
+//             logError('Email Sending Job', error, { jobId, campaignId: campaignData.id });
+//             // Update job status
+//             const jobData = activeSendingJobs.get(jobId);
+//             if (jobData) {
+//                 jobData.error = error.message;
+//                 jobData.completed = true;
+//                 jobData.endTime = new Date().toISOString();
+//             }
+//         });
+
+//         // 8. Respond with success
+//         res.json({
+//             success: true,
+//             message: 'Campaign created and emails are being sent with tracking enabled',
+//             jobId: jobId,
+//             total: recipients.length,
+//             campaign: {
+//                 id: campaignData.id,
+//                 name: campaignData.campaign_name,
+//                 status: 'sending',
+//                 configurationSet: configSetName
+//             },
+//             excelPreview
+//         });
+
+//     } catch (err) {
+//         logError('Campaign Route', err);
+//         res.status(500).json({
+//             success: false,
+//             message: 'Error creating campaign',
+//             error: err.message
+//         });
+//     }
+// });
 
 
 app.get('/campaign/:id/stats', async (req, res) => {
@@ -898,23 +1272,65 @@ app.get('/campaigns', async (req, res) => {
     }
 });
 
-app.post('/upload-image', upload.single('image'), (req, res) => {
+app.post('/upload-image', upload.single('image'), async (req, res) => {
     try {
-        const imageUrl = `/uploads/images/${req.file.filename}`;
+        if (!req.file) {
+            return res.status(400).json({
+                success: false,
+                message: 'No image file uploaded'
+            });
+        }
+
+        // Upload to Cloudinary
+        const cloudinaryResult = await uploadToCloudinary(
+            req.file.path, 
+            'uploads/images', 
+            'image'
+        );
+
+        // Clean up temporary file
+        cleanupTempFile(req.file.path);
+
         res.json({
             success: true,
-            imageUrl: imageUrl,
+            imageUrl: cloudinaryResult.secure_url,
             originalName: req.file.originalname,
-            filename: req.file.filename, // Include filename for CID reference
-            cidName: req.file.filename.split('.')[0] // CID name without extension
+            cloudinaryPublicId: cloudinaryResult.public_id,
+            filename: cloudinaryResult.public_id.split('/').pop(),
+            cidName: cloudinaryResult.public_id.split('/').pop().split('.')[0]
         });
+
     } catch (error) {
-        res.json({
+        // Clean up temporary file in case of error
+        if (req.file) {
+            cleanupTempFile(req.file.path);
+        }
+        
+        console.error('Image upload error:', error);
+        res.status(500).json({
             success: false,
-            message: error.message
+            message: error.message || 'Error uploading image'
         });
     }
 });
+
+// app.post('/upload-image', upload.single('image'), (req, res) => {
+//     try {
+//         const imageUrl = `/uploads/images/${req.file.filename}`;
+//         res.json({
+//             success: true,
+//             imageUrl: imageUrl,
+//             originalName: req.file.originalname,
+//             filename: req.file.filename, // Include filename for CID reference
+//             cidName: req.file.filename.split('.')[0] // CID name without extension
+//         });
+//     } catch (error) {
+//         res.json({
+//             success: false,
+//             message: error.message
+//         });
+//     }
+// });
 
 app.delete('/campaigns/:id', async (req, res) => {
     try {
@@ -1495,6 +1911,56 @@ process.on('SIGINT', () => {
         process.exit(0);
     }, 5000);
 });
+
+
+async function uploadToCloudinary(filePath, folder, resourceType = 'auto') {
+    try {
+        const result = await cloudinary.uploader.upload(filePath, {
+            folder: folder,
+            resource_type: resourceType,
+            use_filename: true,
+            unique_filename: true
+        });
+        return result;
+    } catch (error) {
+        throw new Error(`Cloudinary upload failed: ${error.message}`);
+    }
+}
+
+
+function cleanupTempFile(filePath) {
+    try {
+        if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+        }
+    } catch (error) {
+        console.error('Error cleaning up temp file:', error);
+    }
+}
+
+async function downloadFromCloudinary(publicId, localPath) {
+    try {
+        const url = cloudinary.url(publicId, { resource_type: 'raw' });
+        const response = await fetch(url);
+        const buffer = await response.buffer();
+        fs.writeFileSync(localPath, buffer);
+        return localPath;
+    } catch (error) {
+        throw new Error(`Failed to download from Cloudinary: ${error.message}`);
+    }
+}
+
+// Optional: Function to delete file from Cloudinary
+async function deleteFromCloudinary(publicId, resourceType = 'auto') {
+    try {
+        const result = await cloudinary.uploader.destroy(publicId, {
+            resource_type: resourceType
+        });
+        return result;
+    } catch (error) {
+        throw new Error(`Failed to delete from Cloudinary: ${error.message}`);
+    }
+}
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
