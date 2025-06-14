@@ -142,9 +142,15 @@ const uploadFormData = multer({
 
 
 // Serve the HTML file (if you want to serve it from backend)
+// app.get('/', (req, res) => {
+//     res.sendFile(path.join(__dirname, 'public', 'index.html'));
+// });
+
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+    res.send({
+        message: 'Welcome to the Email Marketing',
+    })
+})
 
 // Health check endpoint
 app.get('/health', (req, res) => {
