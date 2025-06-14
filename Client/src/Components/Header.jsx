@@ -118,7 +118,7 @@ const Header = () => {
                   </span>
                 </div>
                 <span className="text-gray-700 dark:text-gray-300 font-medium">
-                  {userProfile.name}
+                  {userProfile.name || isAuthenticated && "Admin"}
                 </span>
               </div>
               <button
