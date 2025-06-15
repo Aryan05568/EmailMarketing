@@ -9,7 +9,7 @@ import { useSelector } from "react-redux";
 //   // Simple auth state simulation
 //   const [isAuthenticated] = useState(false);
 
- 
+
 
 //   // If authenticated, redirect to dashboard
 //   useEffect(() => {
@@ -134,13 +134,13 @@ import { useSelector } from "react-redux";
 //             </div>
 //           </div>
 
-   
+
 
 //           {/* Support & Legal */}
 //           <div>
 //             <h4 className="text-lg font-semibold mb-4">Support & Legal</h4>
 //             <ul className="space-y-2">
-           
+
 //               <li>
 //                 <Link to="/terms" className="text-gray-300 hover:text-white transition-colors">
 //                   Terms & Conditions
@@ -186,7 +186,7 @@ import { useSelector } from "react-redux";
 export default function MainPage() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const navigate = useNavigate();
-  const {userProfile, isAuthenticated} = useSelector((state)=>state.user)
+  const { userProfile, isAuthenticated } = useSelector((state) => state.user)
   // const [userProfile] = useState(null);
 
   // Animation states
@@ -199,7 +199,7 @@ export default function MainPage() {
   //   }
   // }, [isAuthenticated]);
 
- 
+
 
   const features = [
     {
@@ -243,8 +243,8 @@ export default function MainPage() {
           <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-full blur-3xl"></div>
         </div>
 
-        <Header 
-         
+        <Header
+
         />
 
         {/* Hero Section */}
@@ -255,36 +255,36 @@ export default function MainPage() {
                 <span className="w-2 h-2 bg-blue-500 rounded-full mr-2 animate-pulse"></span>
                 Smart Campaigns, Real Results
               </div> */}
-              
+
               <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-gray-900 dark:text-white mb-6">
                 <span className="block">Modern Email Marketing</span>
                 <span className="block bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
                   For Modern Businesses
                 </span>
               </h1>
-              
+
               <p className="mt-6 max-w-3xl mx-auto text-xl text-gray-600 dark:text-gray-300 leading-relaxed">
-                Create stunning email campaigns that convert. Our platform helps you engage your audience, 
+                Create stunning email campaigns that convert. Our platform helps you engage your audience,
                 optimize performance, and grow your business with ease.
               </p>
-              
+
               <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center items-center">
-                <button 
+                <button
                   onClick={() => navigate("/dashboard")}
                   className="group relative px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold text-lg shadow-2xl hover:shadow-blue-500/25 transition-all duration-300 hover:scale-105 overflow-hidden"
                 >
                   <span className="relative z-10 flex items-center">
-                    Get Started 
+                    Get Started
                     <svg className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                     </svg>
                   </span>
                   <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 </button>
-                
-                
+
+
               </div>
-              
+
               {/* <div className="mt-12 flex justify-center items-center space-x-8 text-sm text-gray-500 dark:text-gray-400">
                 <div className="flex items-center">
                   <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -323,7 +323,7 @@ export default function MainPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {features.map((feature, index) => (
-                <div 
+                <div
                   key={index}
                   className="group relative bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-gray-100 dark:border-gray-700"
                 >
@@ -355,7 +355,7 @@ export default function MainPage() {
             <p className="text-xl text-gray-600 dark:text-gray-300 mb-10">
               Join thousands of businesses that trust EmailFlow to deliver results.
             </p>
-            <button 
+            <button
               onClick={() => navigate("/dashboard")}
               className="px-10 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold text-lg shadow-2xl hover:shadow-blue-500/25 transition-all duration-300 hover:scale-105"
             >
@@ -378,20 +378,20 @@ export default function MainPage() {
                     </svg>
                   </div>
                   <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                    EmailFlow
+                    Brainaura Marketing Tool
                   </h3>
                 </div>
                 <p className="text-gray-300 mb-6 max-w-md leading-relaxed">
-                  The most powerful email marketing platform for modern businesses. 
+                  The most powerful email marketing platform for modern businesses.
                   Create, send, and track beautiful email campaigns with ease.
                 </p>
                 <div className="flex space-x-4">
                   {[
-                    { name: 'Facebook',link:"https://www.facebook.com/jimcorbettwedding", icon: 'M20 10c0-5.523-4.477-10-10-10S0 4.477 0 10c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V10h2.54V7.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V10h2.773l-.443 2.89h-2.33v6.988C16.343 19.128 20 14.991 20 10z' },
-                    { name: 'Instagram',link:"https://www.instagram.com/brain_09_aura/?igsh=bzdjcDV6bTdmaGo5#", icon: "M7.75 2h8.5A5.75 5.75 0 0 1 22 7.75v8.5A5.75 5.75 0 0 1 16.25 22h-8.5A5.75 5.75 0 0 1 2 16.25v-8.5A5.75 5.75 0 0 1 7.75 2Zm0 1.5A4.25 4.25 0 0 0 3.5 7.75v8.5A4.25 4.25 0 0 0 7.75 20.5h8.5A4.25 4.25 0 0 0 20.5 16.25v-8.5A4.25 4.25 0 0 0 16.25 3.5h-8.5ZM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 1.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Zm5.75-.88a.88.88 0 1 1-1.75 0 .88.88 0 0 1 1.75 0Z" },
-                    { name: 'LinkedIn',link:"https://www.facebook.com/jimcorbettwedding", icon: 'M16.338 16.338H13.67V12.16c0-.995-.017-2.277-1.387-2.277-1.39 0-1.601 1.086-1.601 2.207v4.248H8.014v-8.59h2.559v1.174h.037c.356-.675 1.227-1.387 2.526-1.387 2.703 0 3.203 1.778 3.203 4.092v4.711zM5.005 6.575a1.548 1.548 0 11-.003-3.096 1.548 1.548 0 01.003 3.096zm-1.337 9.763H6.34v-8.59H3.667v8.59zM17.668 1H2.328C1.595 1 1 1.581 1 2.298v15.403C1 18.418 1.595 19 2.328 19h15.34c.734 0 1.332-.582 1.332-1.299V2.298C19 1.581 18.402 1 17.668 1z' }
+                    { name: 'Facebook', link: "https://www.facebook.com/jimcorbettwedding", icon: 'M20 10c0-5.523-4.477-10-10-10S0 4.477 0 10c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V10h2.54V7.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V10h2.773l-.443 2.89h-2.33v6.988C16.343 19.128 20 14.991 20 10z' },
+                    { name: 'Instagram', link: "https://www.instagram.com/brain_09_aura/?igsh=bzdjcDV6bTdmaGo5#", icon: "M7.75 2h8.5A5.75 5.75 0 0 1 22 7.75v8.5A5.75 5.75 0 0 1 16.25 22h-8.5A5.75 5.75 0 0 1 2 16.25v-8.5A5.75 5.75 0 0 1 7.75 2Zm0 1.5A4.25 4.25 0 0 0 3.5 7.75v8.5A4.25 4.25 0 0 0 7.75 20.5h8.5A4.25 4.25 0 0 0 20.5 16.25v-8.5A4.25 4.25 0 0 0 16.25 3.5h-8.5ZM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 1.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Zm5.75-.88a.88.88 0 1 1-1.75 0 .88.88 0 0 1 1.75 0Z" },
+                    // { name: 'LinkedIn',link:"https://www.facebook.com/jimcorbettwedding", icon: 'M16.338 16.338H13.67V12.16c0-.995-.017-2.277-1.387-2.277-1.39 0-1.601 1.086-1.601 2.207v4.248H8.014v-8.59h2.559v1.174h.037c.356-.675 1.227-1.387 2.526-1.387 2.703 0 3.203 1.778 3.203 4.092v4.711zM5.005 6.575a1.548 1.548 0 11-.003-3.096 1.548 1.548 0 01.003 3.096zm-1.337 9.763H6.34v-8.59H3.667v8.59zM17.668 1H2.328C1.595 1 1 1.581 1 2.298v15.403C1 18.418 1.595 19 2.328 19h15.34c.734 0 1.332-.582 1.332-1.299V2.298C19 1.581 18.402 1 17.668 1z' }
                   ].map((social, index) => (
-                    <a 
+                    <a
                       key={index}
                       target="_blank"
                       href={social.link}
@@ -438,6 +438,11 @@ export default function MainPage() {
                       Contact Support
                     </a>
                   </li>
+                  <li>
+                    <a  className="text-gray-300 hover:text-white transition-colors duration-200 hover:translate-x-1 inline-block">
+                      Phone Support: +91 8532062775
+                    </a>
+                  </li>
                 </ul>
               </div>
             </div>
@@ -446,11 +451,11 @@ export default function MainPage() {
             <div className="border-t border-gray-800 pt-8">
               <div className="flex flex-col md:flex-row justify-between items-center">
                 <p className="text-gray-400 text-sm">
-                  © {new Date().getFullYear()} EmailFlow. All rights reserved.
+                  © {new Date().getFullYear()} Brainaura Marketing Tool. All rights reserved.
                 </p>
-                <div className="flex items-center space-x-6 mt-4 md:mt-0">
+                {/* <div className="flex items-center space-x-6 mt-4 md:mt-0">
                   <span className="text-gray-400 text-sm">Made with ❤️ for marketers</span>
-                </div>
+                </div> */}
               </div>
             </div>
           </div>

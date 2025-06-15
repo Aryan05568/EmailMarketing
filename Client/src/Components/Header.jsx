@@ -104,7 +104,7 @@ const Header = () => {
             </svg>
           </div>
           <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            EmailFlow
+            <a href="https://brainaura.in/" target="_blank">Brainaura Marketing Tool</a>
           </h1>
         </div>
         
