@@ -209,7 +209,7 @@ export default function MainPage() {
         </svg>
       ),
       title: "Smart Campaign Management",
-      description: "Create and manage email campaigns with AI-powered optimization and intuitive drag-and-drop editor.",
+      description: "Create and manage email campaigns with optimization and intuitive drag-and-drop editor.",
       gradient: "from-blue-500 to-cyan-500"
     },
     {
@@ -251,10 +251,10 @@ export default function MainPage() {
         <div className="relative pt-20 pb-16 flex items-center justify-center min-h-screen">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <div className={`transform transition-all duration-1000 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
-              <div className="inline-flex items-center px-4 py-2 bg-blue-100 dark:bg-blue-900/30 rounded-full text-blue-600 dark:text-blue-400 text-sm font-medium mb-8 border border-blue-200 dark:border-blue-800">
+              {/* <div className="inline-flex items-center px-4 py-2 bg-blue-100 dark:bg-blue-900/30 rounded-full text-blue-600 dark:text-blue-400 text-sm font-medium mb-8 border border-blue-200 dark:border-blue-800">
                 <span className="w-2 h-2 bg-blue-500 rounded-full mr-2 animate-pulse"></span>
-                New: AI-Powered Email Optimization
-              </div>
+                Smart Campaigns, Real Results
+              </div> */}
               
               <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-gray-900 dark:text-white mb-6">
                 <span className="block">Modern Email Marketing</span>
@@ -264,7 +264,7 @@ export default function MainPage() {
               </h1>
               
               <p className="mt-6 max-w-3xl mx-auto text-xl text-gray-600 dark:text-gray-300 leading-relaxed">
-                Create stunning email campaigns that convert. Our AI-powered platform helps you engage your audience, 
+                Create stunning email campaigns that convert. Our platform helps you engage your audience, 
                 optimize performance, and grow your business with ease.
               </p>
               
