@@ -390,8 +390,8 @@ const handleEditUser = async (userData) => {
               <User className="h-5 w-5 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white truncate">{userProfile.name}</p>
-              <p className="text-xs text-slate-300 truncate">{userProfile.email}</p>
+              <p className="text-sm font-medium text-white truncate">{userProfile?.name}</p>
+              <p className="text-xs text-slate-300 truncate">{userProfile?.email}</p>
             </div>
           </div>
         </div>
