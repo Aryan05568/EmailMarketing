@@ -265,7 +265,7 @@ async function sendEmailsJob({
 
             // Prepare email options
             const mailOptions = {
-                from: "noreply@marketing.brainaura.in",
+                from: "aajmarketa@gmail.com",
                 to: email,
                 subject: personalizedSubject,
                 html: personalized,
