@@ -10,6 +10,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const supabase = require('./config/supabase_client');
 const authRoutes = require('./route/route');
+const analyticsRoutes = require("./route/analytics")
 // const fetch = require('node-fetch');
 const { previewExcel } = require('./services/excelservice');
 const { parseHtmlTemplate } = require('./services/templateservice');
@@ -40,6 +41,7 @@ app.use(cors({
 
 app.use(express.json()); // parse incoming JSON requests
 app.use('/api/auth', authRoutes);
+app.use('/api/analytics',analyticsRoutes)
 
 // Enable CORS for React frontend
 app.use(cors({
@@ -750,28 +752,28 @@ app.post('/campaign',uploadFormData.none(), async (req, res) => {
         }
 
         // 5. CREATE SES CONFIGURATION SET FOR TRACKING
-        const configSetName = `campaign-${campaignData.id}-tracking`;
+        // const configSetName = `campaign-${campaignData.id}-tracking`;
         
-        try {
-            await createConfigurationSet(configSetName);
-        } catch (configError) {
-            logError('Configuration Set Creation', configError, { configSetName });
-            console.warn('Continuing without configuration set due to error:', configError.message);
-        }
+        // try {
+        //     await createConfigurationSet(configSetName);
+        // } catch (configError) {
+        //     logError('Configuration Set Creation', configError, { configSetName });
+        //     console.warn('Continuing without configuration set due to error:', configError.message);
+        // }
 
         // 6. Update campaign with configuration set name
-        const { error: updateError } = await supabase
-            .from('campaigns')
-            .update({ 
-                configuration_set: configSetName,
-                status: 'sending',
-                updated_at: new Date().toISOString()
-            })
-            .eq('id', campaignData.id);
+        // const { error: updateError } = await supabase
+        //     .from('campaigns')
+        //     .update({ 
+        //         configuration_set: configSetName,
+        //         status: 'sending',
+        //         updated_at: new Date().toISOString()
+        //     })
+        //     .eq('id', campaignData.id);
 
-        if (updateError) {
-            logError('Campaign Update', updateError, { campaignId: campaignData.id });
-        }
+        // if (updateError) {
+        //     logError('Campaign Update', updateError, { campaignId: campaignData.id });
+        // }
 
         // 7. START EMAIL SENDING WITH TRACKING
         let recipients = [];
@@ -794,7 +796,7 @@ app.post('/campaign',uploadFormData.none(), async (req, res) => {
         // Create transporter
         const transporter = createTransporter({ 
             delayBetweenEmails: parseInt(delayBetweenEmails),
-            configurationSet: configSetName
+            // configurationSet: configSetName
         });
 
         const jobId = `campaign-${campaignData.id}`;
@@ -827,7 +829,7 @@ app.post('/campaign',uploadFormData.none(), async (req, res) => {
             activeSendingJobs,
             uploadsPath: './uploads/images/', // You might want to change this to use Cloudinary URLs
             campaignId: campaignData.id,
-            configurationSet: configSetName,
+            // configurationSet: configSetName,
         }).catch(error => {
             logError('Email Sending Job', error, { jobId, campaignId: campaignData.id });
             const jobData = activeSendingJobs.get(jobId);
@@ -848,7 +850,7 @@ app.post('/campaign',uploadFormData.none(), async (req, res) => {
                 id: campaignData.id,
                 name: campaignData.campaign_name,
                 status: 'sending',
-                configurationSet: configSetName
+                // configurationSet: configSetName
             },
             excelPreview
         });
@@ -1115,96 +1117,96 @@ app.post('/campaign',uploadFormData.none(), async (req, res) => {
 // });
 
 
-app.get('/campaign/:id/stats', async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { startDate, endDate } = req.query;
+// app.get('/campaign/:id/stats', async (req, res) => {
+//     try {
+//         const { id } = req.params;
+//         const { startDate, endDate } = req.query;
         
-        // Get campaign details
-        const { data: campaign, error } = await supabase
-            .from('campaigns')
-            .select('*')
-            .eq('id', id)
-            .single();
+//         // Get campaign details
+//         const { data: campaign, error } = await supabase
+//             .from('campaigns')
+//             .select('*')
+//             .eq('id', id)
+//             .single();
             
-        if (error || !campaign) {
-            return res.status(404).json({
-                success: false,
-                message: 'Campaign not found'
-            });
-        }
+//         if (error || !campaign) {
+//             return res.status(404).json({
+//                 success: false,
+//                 message: 'Campaign not found'
+//             });
+//         }
         
-        const configSetName = campaign.configuration_set;
-        if (!configSetName) {
-            return res.status(400).json({
-                success: false,
-                message: 'Campaign does not have tracking enabled'
-            });
-        }
+//         // const configSetName = campaign.configuration_set;
+//         // if (!configSetName) {
+//         //     return res.status(400).json({
+//         //         success: false,
+//         //         message: 'Campaign does not have tracking enabled'
+//         //     });
+//         // }
         
-        // Get statistics from CloudWatch
-        const start = startDate ? new Date(startDate) : new Date(campaign.created_at);
-        const end = endDate ? new Date(endDate) : new Date();
+//         // Get statistics from CloudWatch
+//         const start = startDate ? new Date(startDate) : new Date(campaign.created_at);
+//         const end = endDate ? new Date(endDate) : new Date();
         
-        let stats = {};
-        try {
-            stats = await getCampaignStats(configSetName, start, end);
-        } catch (error) {
-            logError('Campaign Stats Retrieval', error, { configSetName, campaignId: id });
-            return res.status(500).json({
-                success: false,
-                message: 'Failed to retrieve campaign statistics',
-                error: error.message
-            });
-        }
+//         let stats = {};
+//         try {
+//             stats = await getCampaignStats(configSetName, start, end);
+//         } catch (error) {
+//             logError('Campaign Stats Retrieval', error, { configSetName, campaignId: id });
+//             return res.status(500).json({
+//                 success: false,
+//                 message: 'Failed to retrieve campaign statistics',
+//                 error: error.message
+//             });
+//         }
         
-        // Calculate derived metrics
-        const deliveryRate = stats.Send > 0 ? (stats.Delivery / stats.Send * 100).toFixed(2) : 0;
-        const bounceRate = stats.Send > 0 ? (stats.Bounce / stats.Send * 100).toFixed(2) : 0;
-        const complaintRate = stats.Send > 0 ? (stats.Complaint / stats.Send * 100).toFixed(2) : 0;
-        const openRate = stats.Delivery > 0 ? (stats.Open / stats.Delivery * 100).toFixed(2) : 0;
-        const clickRate = stats.Delivery > 0 ? (stats.Click / stats.Delivery * 100).toFixed(2) : 0;
+//         // Calculate derived metrics
+//         const deliveryRate = stats.Send > 0 ? (stats.Delivery / stats.Send * 100).toFixed(2) : 0;
+//         const bounceRate = stats.Send > 0 ? (stats.Bounce / stats.Send * 100).toFixed(2) : 0;
+//         const complaintRate = stats.Send > 0 ? (stats.Complaint / stats.Send * 100).toFixed(2) : 0;
+//         const openRate = stats.Delivery > 0 ? (stats.Open / stats.Delivery * 100).toFixed(2) : 0;
+//         const clickRate = stats.Delivery > 0 ? (stats.Click / stats.Delivery * 100).toFixed(2) : 0;
         
-        res.json({
-            success: true,
-            campaign: {
-                id: campaign.id,
-                name: campaign.campaign_name,
-                configurationSet: configSetName,
-                status: campaign.status,
-                createdAt: campaign.created_at,
-                startedAt: campaign.started_at
-            },
-            statistics: {
-                sent: stats.Send || 0,
-                delivered: stats.Delivery || 0,
-                bounced: stats.Bounce || 0,
-                complaints: stats.Complaint || 0,
-                opens: stats.Open || 0,
-                clicks: stats.Click || 0
-            },
-            rates: {
-                deliveryRate: `${deliveryRate}%`,
-                bounceRate: `${bounceRate}%`,
-                complaintRate: `${complaintRate}%`,
-                openRate: `${openRate}%`,
-                clickRate: `${clickRate}%`
-            },
-            period: {
-                startDate: start.toISOString(),
-                endDate: end.toISOString()
-            }
-        });
+//         res.json({
+//             success: true,
+//             campaign: {
+//                 id: campaign.id,
+//                 name: campaign.campaign_name,
+//                 // configurationSet: configSetName,
+//                 status: campaign.status,
+//                 createdAt: campaign.created_at,
+//                 startedAt: campaign.started_at
+//             },
+//             statistics: {
+//                 sent: stats.Send || 0,
+//                 delivered: stats.Delivery || 0,
+//                 bounced: stats.Bounce || 0,
+//                 complaints: stats.Complaint || 0,
+//                 opens: stats.Open || 0,
+//                 clicks: stats.Click || 0
+//             },
+//             rates: {
+//                 deliveryRate: `${deliveryRate}%`,
+//                 bounceRate: `${bounceRate}%`,
+//                 complaintRate: `${complaintRate}%`,
+//                 openRate: `${openRate}%`,
+//                 clickRate: `${clickRate}%`
+//             },
+//             period: {
+//                 startDate: start.toISOString(),
+//                 endDate: end.toISOString()
+//             }
+//         });
         
-    } catch (err) {
-        logError('Campaign Stats Route', err, { campaignId: req.params.id });
-        res.status(500).json({
-            success: false,
-            message: 'Error retrieving campaign statistics',
-            error: err.message
-        });
-    }
-});
+//     } catch (err) {
+//         logError('Campaign Stats Route', err, { campaignId: req.params.id });
+//         res.status(500).json({
+//             success: false,
+//             message: 'Error retrieving campaign statistics',
+//             error: err.message
+//         });
+//     }
+// });
 
 // Enhanced route for tracking email opens
 app.get('/api/track/open/:campaignId', async (req, res) => {
