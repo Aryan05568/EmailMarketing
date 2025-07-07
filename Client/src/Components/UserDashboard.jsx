@@ -92,7 +92,11 @@ const UserDashboard = () => {
       const response = await axios.get(`${BASEURL}/get_campaigns`);
       
       if (response.data.success) {
-        setCampaigns(response.data.data);
+        const filteredCampaigns = response.data.data.filter(campaign => 
+        campaign.smtp_server === userProfile?.id
+      );
+      setCampaigns(filteredCampaigns);
+        // setCampaigns(response.data.data);
       } else {
         setError('Failed to fetch campaigns');
       }

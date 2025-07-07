@@ -731,7 +731,7 @@ app.post('/campaign',uploadFormData.none(), async (req, res) => {
                 email_column: emailColumn,
                 name_column: nameColumn,
                 subject_line: subjectLine,
-                smtp_server: smtpServer || 'email-smtp.ap-south-1.amazonaws.com',
+                smtp_server: smtpServer ,
                 smtp_port: smtpPort || 587,
                 email_user: emailUser,
                 email_pass: emailPass,
@@ -746,34 +746,61 @@ app.post('/campaign',uploadFormData.none(), async (req, res) => {
             .select()
             .single();
 
+
+//   if (campaignData) {
+//     try {
+//         const recipientEmails = recipients.map(r => r[emailColumn]);
+//         console.log('ElasticEmail Payload:', {
+//             Name: campaign_name,
+//             Subject: subjectLine,
+//             From: emailUser,
+//             FromName: senderName,
+//             Recipients: recipientEmails
+//         });
+
+//         if (recipientEmails.length === 0) {
+//             throw new Error('No recipient emails available for Elastic Email campaign');
+//         }
+
+//         const elasticResponse = await axios.post('https://api.elasticemail.com/v4/campaigns', {
+//             Name: campaign_name,
+//             Subject: subjectLine,
+//             From: emailUser,
+//             FromName: senderName,
+//             Content: {
+//                 Body: [
+//                     {
+//                         ContentType: "HTML",
+//                         Charset: "utf-8",
+//                         Content: finalTemplateContent
+//                     }
+//                 ]
+//             },
+//             Recipients: {
+//                 Emails: recipientEmails
+//             }
+//         }, {
+//             headers: {
+//                 'X-ElasticEmail-ApiKey': process.env.ELASTIC_EMAIL_API_KEY,
+//                 'Content-Type': 'application/json'
+//             }
+//         });
+
+//         console.log('Elastic Email Campaign Created:', elasticResponse.data);
+//     } catch (elasticError) {
+//         const elasticErrorMessage = elasticError.response?.data || elasticError.response?.statusText || elasticError.message || 'Unknown Error';
+//         logError('ElasticEmail Campaign', elasticErrorMessage, { campaignId: campaignData.id });
+//         console.warn('Elastic Email campaign creation failed:', elasticErrorMessage);
+//     }
+// }
+
+
         if (campaignError) {
             logError('Campaign Creation', campaignError);
             throw new Error(`Failed to create campaign: ${campaignError.message}`);
         }
 
-        // 5. CREATE SES CONFIGURATION SET FOR TRACKING
-        // const configSetName = `campaign-${campaignData.id}-tracking`;
-        
-        // try {
-        //     await createConfigurationSet(configSetName);
-        // } catch (configError) {
-        //     logError('Configuration Set Creation', configError, { configSetName });
-        //     console.warn('Continuing without configuration set due to error:', configError.message);
-        // }
-
-        // 6. Update campaign with configuration set name
-        // const { error: updateError } = await supabase
-        //     .from('campaigns')
-        //     .update({ 
-        //         configuration_set: configSetName,
-        //         status: 'sending',
-        //         updated_at: new Date().toISOString()
-        //     })
-        //     .eq('id', campaignData.id);
-
-        // if (updateError) {
-        //     logError('Campaign Update', updateError, { campaignId: campaignData.id });
-        // }
+  
 
         // 7. START EMAIL SENDING WITH TRACKING
         let recipients = [];
@@ -822,6 +849,7 @@ app.post('/campaign',uploadFormData.none(), async (req, res) => {
             nameColumn,
             subjectLine,
             senderName,
+            emailUser,
             templateContent: finalTemplateContent,
             variables: Array.isArray(variables) ? variables : JSON.parse(variables || '[]'),
             transporter,

@@ -35,51 +35,117 @@ const LoginForm = () => {
   };
 
   const handleLogin = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    setSuccess('');
+  e.preventDefault();
+  setLoading(true);
+  setError('');
+  setSuccess('');
 
-    try {
-     const response = await fetch(`${BASEURL}/api/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-       
-        }),
-      });
+  try {
+    const response = await fetch(`${BASEURL}/api/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: formData.email,
+        password: formData.password,
+      }),
+    });
 
-      const data = await response.json();
-      console.log(data)
-      
-      // Mock successful login
+    const data = await response.json();
+    console.log(data);
+
+    // Check if the response is successful
+    if (!response.ok) {
+      // Handle error response
+      throw new Error(data.message || 'Invalid credentials');
+    }
+
+    // Check if login was successful (you might need to adjust this based on your API response structure)
+    if (data.success || data.token || data.user) {
       setSuccess('Login successful! Redirecting...');
       
       toast.success('User Logged In successfully!', {
-          duration: 4000,
-          position: 'top-right',
-         
-        });
-        if(data.role === 'admin'){
-          dispatch(setAuthentication(true))
-          dispatch(getProfile("Admin"))
-          navigate('/dashboard')
-        }else{
-          dispatch(setAuthentication(true))
-          dispatch(getProfile(data.user))
-          navigate('/user-dashboard')
-        }
-      
-    } catch (err) {
-      setError(err.message || 'An error occurred during login');
-    } finally {
-      setLoading(false);
+        duration: 4000,
+        position: 'top-right',
+      });
+
+      if (data.role === 'admin') {
+        dispatch(setAuthentication(true));
+        dispatch(getProfile("Admin"));
+        navigate('/dashboard');
+      } else {
+        dispatch(setAuthentication(true));
+        dispatch(getProfile(data.user));
+        navigate('/user-dashboard');
+      }
+    } else {
+      // Handle case where response is ok but login failed
+      throw new Error(data.message || 'Login failed');
     }
-  };
+
+  } catch (err) {
+    setError(err.message || 'An error occurred during login');
+    toast.error(err.message || 'Login failed!', {
+      duration: 4000,
+      position: 'top-right',
+    });
+  } finally {
+    setLoading(false);
+  }
+};
+
+  // const handleLogin = async (e) => {
+  //   e.preventDefault();
+  //   setLoading(true);
+  //   setError('');
+  //   setSuccess('');
+
+  //   try {
+  //    const response = await fetch(`${BASEURL}/api/auth/login`, {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //       body: JSON.stringify({
+  //         email: formData.email,
+  //         password: formData.password,
+       
+  //       }),
+  //     });
+
+  //     const data = await response.json();
+  //     console.log(data)
+
+  //     if (!response.ok) {
+  //     // Handle error response
+  //     throw new Error(data.message || 'Invalid credentials');
+  //   }
+      
+  //     // Mock successful login
+  //     setSuccess('Login successful! Redirecting...');
+      
+  //     toast.success('User Logged In successfully!', {
+  //         duration: 4000,
+  //         position: 'top-right',
+         
+  //       });
+  //       if(data.role === 'admin'){
+  //         dispatch(setAuthentication(true))
+  //         dispatch(getProfile("Admin"))
+  //         navigate('/dashboard')
+  //       }else{
+  //         dispatch(setAuthentication(true))
+  //         dispatch(getProfile(data.user))
+  //         navigate('/user-dashboard')
+  //       }
+      
+  //   } catch (err) {
+  //     setError(err.message || 'An error occurred during login');
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   const isFormValid = formData.email && formData.password;
 
