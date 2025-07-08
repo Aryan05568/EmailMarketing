@@ -40,6 +40,17 @@ const createUser = async(req, res) => {
     }
 
     try {
+        const { count, error: countError } = await supabase
+      .from('users')
+      .select('*', { count: 'exact', head: true });
+
+    if (countError) {
+      return res.status(500).json({ message: 'Error checking user count', error: countError.message });
+    }
+
+    if (count >= 10) {
+      return res.status(403).json({ message: 'User limit reached. Maximum 10 users allowed.' });
+    }
         // Check if user already exists
         const { data: existingUser, errors } = await supabase
             .from('users')

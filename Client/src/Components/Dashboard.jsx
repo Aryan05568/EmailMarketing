@@ -77,6 +77,10 @@ const Dashboard = () => {
     } catch (err) {
       // Axios error handling
       console.log(err)
+      toast.error(err.response?.data?.message || 'An error occurred during user creation',{
+        duration: 4000,
+        position: 'top-right',
+      })
       // const errorMessage = err.response?.data?.message || err.message || 'An error occurred during login';
 
     }
@@ -140,15 +144,28 @@ const Dashboard = () => {
     }
 };
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+const formatDate = (dateString) => {
+  return new Date(dateString).toLocaleString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true // optional: for AM/PM format
+  });
+};
+
+
+  // const formatDate = (dateString) => {
+  //   return new Date(dateString).toLocaleDateString('en-US', {
+  //     year: 'numeric',
+  //     month: 'short',
+  //     day: 'numeric',
+  //     hour: '2-digit',
+  //     minute: '2-digit'
+  //   });
+  // };
 console.log(users)
 
   useEffect(()=>{
@@ -1003,192 +1020,7 @@ useEffect(() => {
 };
 
 
-//  const DashboardContent = () => (
-//     <div className="p-6 space-y-8">
-//       {/* Stats Cards */}
-//       {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-//         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-//           <div className="flex items-center">
-//             <div className="p-2 bg-blue-100 rounded-lg">
-//               <Users className="h-6 w-6 text-blue-600" />
-//             </div>
-//             <div className="ml-4">
-//               <p className="text-sm font-medium text-gray-600">Total Subscribers</p>
-//               <p className="text-2xl font-bold text-gray-900">{stats.totalSubscribers.toLocaleString()}</p>
-//             </div>
-//           </div>
-//         </div>
 
-//         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-//           <div className="flex items-center">
-//             <div className="p-2 bg-green-100 rounded-lg">
-//               <Mail className="h-6 w-6 text-green-600" />
-//             </div>
-//             <div className="ml-4">
-//               <p className="text-sm font-medium text-gray-600">Total Campaigns</p>
-//               <p className="text-2xl font-bold text-gray-900">{stats.totalCampaigns}</p>
-//             </div>
-//           </div>
-//         </div>
-
-//         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-//           <div className="flex items-center">
-//             <div className="p-2 bg-yellow-100 rounded-lg">
-//               <Eye className="h-6 w-6 text-yellow-600" />
-//             </div>
-//             <div className="ml-4">
-//               <p className="text-sm font-medium text-gray-600">Open Rate</p>
-//               <p className="text-2xl font-bold text-gray-900">{stats.openRate}%</p>
-//             </div>
-//           </div>
-//         </div>
-
-//         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-//           <div className="flex items-center">
-//             <div className="p-2 bg-purple-100 rounded-lg">
-//               <TrendingUp className="h-6 w-6 text-purple-600" />
-//             </div>
-//             <div className="ml-4">
-//               <p className="text-sm font-medium text-gray-600">Click Rate</p>
-//               <p className="text-2xl font-bold text-gray-900">{stats.clickRate}%</p>
-//             </div>
-//           </div>
-//         </div>
-//       </div> */}
-
-//       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-//         {[
-//           { 
-//             title: 'Total Subscribers', 
-//             value: stats.totalSubscribers.toLocaleString(), 
-//             icon: Users, 
-//             color: 'from-blue-500 to-cyan-500',
-//             bgColor: 'from-blue-50 to-cyan-50',
-//             change: '+12.5%',
-//             changeColor: 'text-green-600'
-//           },
-//           { 
-//             title: 'Active Campaigns', 
-//             value: stats.totalCampaigns, 
-//             icon: Mail, 
-//             color: 'from-emerald-500 to-green-500',
-//             bgColor: 'from-emerald-50 to-green-50',
-//             change: '+3.2%',
-//             changeColor: 'text-green-600'
-//           },
-//           { 
-//             title: 'Open Rate', 
-//             value: `${stats.openRate}%`, 
-//             icon: Eye, 
-//             color: 'from-amber-500 to-orange-500',
-//             bgColor: 'from-amber-50 to-orange-50',
-//             change: '+2.1%',
-//             changeColor: 'text-green-600'
-//           },
-//           { 
-//             title: 'Click Rate', 
-//             value: `${stats.clickRate}%`, 
-//             icon: TrendingUp, 
-//             color: 'from-purple-500 to-pink-500',
-//             bgColor: 'from-purple-50 to-pink-50',
-//             change: '-0.5%',
-//             changeColor: 'text-red-600'
-//           }
-//         ].map((stat, index) => {
-//           const Icon = stat.icon;
-//           return (
-//             <div key={index} className={`bg-gradient-to-br ${stat.bgColor} p-6 rounded-2xl shadow-lg border border-white/50 hover:shadow-xl transform hover:-translate-y-2 transition-all duration-300 group`}>
-//               <div className="flex items-center justify-between mb-4">
-//                 <div className={`p-3 bg-gradient-to-br ${stat.color} rounded-xl shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-//                   <Icon className="h-6 w-6 text-white" />
-//                 </div>
-//                 <div className={`text-sm font-semibold ${stat.changeColor} bg-white/80 px-2 py-1 rounded-full`}>
-//                   {stat.change}
-//                 </div>
-//               </div>
-//               <div>
-//                 <p className="text-sm font-medium text-gray-600 mb-1">{stat.title}</p>
-//                 <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
-//               </div>
-//             </div>
-//           );
-//         })}
-//       </div>
-
-
-//       {/* Recent Campaigns */}
-//       <div className="bg-white rounded-2xl shadow-xl border border-gray-200/50 overflow-hidden">
-//         <div className="bg-gradient-to-r from-gray-50 to-white p-6 border-b border-gray-200/50">
-//           <div className="flex items-center justify-between">
-//              <h3 className="text-xl font-bold text-gray-900">Recent Campaigns</h3>
-//               <p className="text-sm text-gray-500 mt-1">Monitor your email campaign performance</p>
-//             <button
-//               onClick={() => setActiveTab('compose')}
-//               className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl text-sm font-semibold hover:from-blue-700 hover:to-purple-700 flex items-center shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
-//             >
-//               <Plus className="h-4 w-4 mr-2" />
-//               New Campaign
-//             </button>
-//           </div>
-//         </div>
-//         <div className="overflow-x-auto">
-//           <table className="min-w-full">
-//             <thead className="bg-gray-50/50">
-//               <tr>
-//                 {['Campaign', 'Status', 'Sent', 'Opened', 'Clicked', 'Date', 'Actions'].map((header) => (
-//                   <th key={header} className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-//                     {header}
-//                   </th>
-//                 ))}
-//               </tr>
-//             </thead>
-//             <tbody className="bg-white divide-y divide-gray-200">
-//               {campaigns.map((campaign) => (
-//                 <tr key={campaign.id} className="hover:bg-gray-50/50 transition-colors duration-200 group">
-//                 <td className="px-6 py-5">
-//                     <div className="flex items-center">
-//                       <div className="h-10 w-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center mr-4">
-//                         <Mail className="h-5 w-5 text-white" />
-//                       </div>
-//                       <div>
-//                         <div className="text-sm font-semibold text-gray-900">{campaign.campaign_name}</div>
-                        
-//                       </div>
-//                     </div>
-//                   </td>
-//                   <td className="px-6 py-5">
-//                     <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${
-//                       campaign.status === 'Active' ? 'bg-green-100 text-green-800 border border-green-200' :
-//                       campaign.status === 'Draft' ? 'bg-yellow-100 text-yellow-800 border border-yellow-200' :
-//                       'bg-gray-100 text-gray-800 border border-gray-200'
-//                     }`}>
-//                       {campaign.status}
-//                     </span>
-//                   </td>
-//                   <td className="px-6 py-5 text-sm font-medium text-gray-900">25</td>
-//                   <td className="px-6 py-5 text-sm font-medium text-gray-900">478</td>
-//                   <td className="px-6 py-5 text-sm font-medium text-gray-900">478</td>
-
-//                   <td className="px-6 py-5 text-sm text-gray-500">{formatDate(campaign.created_at)}</td>
-//                   <td className="px-6 py-5 text-sm font-medium text-gray-900">
-//                     <div className="flex space-x-2">
-//                       <button className="text-blue-600 hover:text-blue-900">
-//                         <Eye className="h-4 w-4" />
-//                       </button>
-                     
-//                       <button onClick={()=>deleteCampaign(campaign.id)} className="text-red-600 hover:text-red-900">
-//                         <Trash2 className="h-4 w-4" />
-//                       </button>
-//                     </div>
-//                   </td>
-//                 </tr>
-//               ))}
-//             </tbody>
-//           </table>
-//         </div>
-//       </div>
-//     </div>
-//   );
 
   // Users Tab Content
   const UsersContent = () => (
@@ -1261,7 +1093,7 @@ useEffect(() => {
           <table className="min-w-full ">
           <thead className="bg-gray-50/50">
               <tr>
-                {['User', 'Role',  'Created', 'Actions'].map((header) => (
+                {['User','Password', 'Role',  'Created', 'Actions'].map((header) => (
                   <th key={header} className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     {header}
                   </th>
@@ -1281,6 +1113,14 @@ useEffect(() => {
                         <div className="text-sm text-gray-500">{user.email}</div>
                       </div>
                     </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${user.role === 'Admin' ? 'bg-red-100 text-red-800' :
+                        user.role === 'Manager' ? 'bg-blue-100 text-blue-800' :
+                          'bg-gray-100 text-gray-800'
+                      }`}>
+                     {user.password}
+                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${user.role === 'Admin' ? 'bg-red-100 text-red-800' :

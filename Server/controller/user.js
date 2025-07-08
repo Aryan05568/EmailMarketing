@@ -43,7 +43,7 @@ const getUsers = async (req, res) => {
     try {
         const { data: users, error } = await supabase
             .from('users')
-            .select('name, email, created_at,id')
+            .select('name, email,password, created_at,id')
             .order('created_at', { ascending: false });
 
         if (error) {
