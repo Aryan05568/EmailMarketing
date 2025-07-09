@@ -84,8 +84,8 @@ async function sendEmailViaAPI(emailData) {
 
         return {
             success: response.data.success,
-            messageId: response.data.data.messageid,
-            transactionId: response.data.data.transactionid
+            // messageId: response.data.data.messageid,
+            // transactionId: response.data.data.transactionid
         };
     } catch (error) {
         console.error('Elastic Email API Error:', error.response?.data || error.message);
@@ -257,6 +257,9 @@ async function sendEmailsJob({
                     success++;
                     const jobData = activeSendingJobs.get(jobId);
                     if (jobData) jobData.sentEmails = success;
+
+
+                    
 
                     // Optional: Store minimal campaign metadata if needed
                     // No need to store individual email tracking - use Elastic Email API for analytics

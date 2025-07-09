@@ -209,6 +209,7 @@ class CampaignScheduler {
             sendEmailsJob({
                 jobId,
                 recipients,
+                emailUser:email_user,
                 emailColumn: email_column,
                 nameColumn: name_column,
                 subjectLine: subject_line,
@@ -218,7 +219,8 @@ class CampaignScheduler {
                 transporter,
                 delayBetweenEmails: parseInt(delay_between_emails),
                 activeSendingJobs: this.activeSendingJobs,
-                uploadsPath: './uploads/images/'
+                uploadsPath: './uploads/images/',
+                // useAPI = true
             }).then(async () => {
                 // Update campaign status back to scheduled after completion
                 await supabase

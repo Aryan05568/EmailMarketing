@@ -858,13 +858,52 @@ app.post('/campaign',uploadFormData.none(), async (req, res) => {
             uploadsPath: './uploads/images/', // You might want to change this to use Cloudinary URLs
             campaignId: campaignData.id,
             // configurationSet: configSetName,
-        }).catch(error => {
+        }).then(async () => {
+            // Update campaign status to completed when email sending is finished
+            try {
+                const { error: updateError } = await supabase
+                    .from('campaigns')
+                    .update({ 
+                        status: 'completed',
+                        // completed_at: new Date().toISOString()
+                    })
+                    .eq('id', campaignData.id);
+
+                if (updateError) {
+                    logError('Campaign Status Update', updateError, { campaignId: campaignData.id });
+                } else {
+                    console.log(`Campaign ${campaignData.id} status updated to completed`);
+                }
+            } catch (updateErr) {
+                logError('Campaign Status Update Error', updateErr, { campaignId: campaignData.id });
+            }
+        }).catch(async (error) => {
             logError('Email Sending Job', error, { jobId, campaignId: campaignData.id });
             const jobData = activeSendingJobs.get(jobId);
             if (jobData) {
                 jobData.error = error.message;
                 jobData.completed = true;
                 jobData.endTime = new Date().toISOString();
+            }
+            
+            // Update campaign status to failed when there's an error
+            try {
+                const { error: updateError } = await supabase
+                    .from('campaigns')
+                    .update({ 
+                        status: 'failed',
+                        // error_message: error.message,
+                        // completed_at: new Date().toISOString()
+                    })
+                    .eq('id', campaignData.id);
+
+                if (updateError) {
+                    logError('Campaign Status Update (Failed)', updateError, { campaignId: campaignData.id });
+                } else {
+                    console.log(`Campaign ${campaignData.id} status updated to failed`);
+                }
+            } catch (updateErr) {
+                logError('Campaign Status Update Error (Failed)', updateErr, { campaignId: campaignData.id });
             }
         });
 
