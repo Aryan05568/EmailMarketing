@@ -264,9 +264,23 @@ async function sendEmailsJob({
                     // Optional: Store minimal campaign metadata if needed
                     // No need to store individual email tracking - use Elastic Email API for analytics
                 } catch (err) {
+                    // retries--;
+                    // if (retries < 0) throw err;
+                    // await new Promise(r => setTimeout(r, 1000));
+                    const isRateLimit = err.response?.status === 429;
+                    const retryAfter = parseInt(err.response?.headers?.['retry-after']) || 5;
+
+                    console.warn(`Retrying email to ${email}. Retries left: ${retries}, Reason: ${err.message}`);
+
                     retries--;
-                    if (retries < 0) throw err;
-                    await new Promise(r => setTimeout(r, 1000));
+                    if (retries < 0) {
+                        throw err;
+                    }
+
+                    // Backoff: if 429, use Retry-After header
+                    await new Promise(r =>
+                        setTimeout(r, isRateLimit ? retryAfter * 1000 : (3 - retries) * 2000)
+                    );
                 }
             }
         } catch (err) {

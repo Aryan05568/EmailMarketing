@@ -148,7 +148,7 @@ const uploadFormData = multer({
 //     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 // });
 
-app.get('/', (req, res) => {
+app.get('/ping', (req, res) => {
     res.send({
         message: 'Welcome to the Email Marketing',
     })
