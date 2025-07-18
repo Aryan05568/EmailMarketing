@@ -405,7 +405,7 @@ const router = express.Router();
 
 // Configuration
 const ELASTIC_EMAIL_API_KEY = process.env.ELASTIC_EMAIL_API_KEY;
-const ELASTIC_EMAIL_API_URL = 'https://api.elasticemail.com/v2';
+const ELASTIC_EMAIL_API_URL = 'https://api.elasticemail.com/v4';
 
 // Helper functions
 function getPerformanceStatus(deliveryRate, openRate, clickRate) {
@@ -572,6 +572,8 @@ router.get('/campaign/:campaignName', async (req, res) => {
 });
 
 // Get overall account analytics
+
+
 router.get('/overall', async (req, res) => {
     try {
         const { startDate, endDate, includeChannels } = req.query;
@@ -580,73 +582,106 @@ router.get('/overall', async (req, res) => {
         const end = endDate ? new Date(endDate) : new Date();
         const start = startDate ? new Date(startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
         
+        // Use the correct Elastic Email API endpoint and authentication
         const params = new URLSearchParams({
-            apikey: ELASTIC_EMAIL_API_KEY,
             from: start.toISOString().split('T')[0],
             to: end.toISOString().split('T')[0]
         });
 
-        const response = await axios.get(`${ELASTIC_EMAIL_API_URL}/log/summary?${params}`);
+        // Option 1: Use API key in query parameters
+        const response = await axios.get(`${ELASTIC_EMAIL_API_URL}/statistics?${params.toString()}&apikey=${ELASTIC_EMAIL_API_KEY}`, {
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+
+        // Option 2: Alternative using X-ElasticEmail-ApiKey header (uncomment if preferred)
+        /*
+        const response = await axios.get(`${ELASTIC_EMAIL_API_URL}/statistics?${params.toString()}`, {
+            headers: {
+                'X-ElasticEmail-ApiKey': ELASTIC_EMAIL_API_KEY,
+                'Accept': 'application/json'
+            }
+        });
+        */
+
+        console.log('API Response:', response.data);
+
+        const data = response.data;
         
-        if (response.data.success) {
-            // FIX: Access the correct data path
-            const data = response.data.data.logstatussummary;
-            
-            // FIX: Use emailtotal instead of sent
-            const sent = data.emailtotal || 0;
-            
-            // Calculate overall metrics
-            const deliveryRate = sent > 0 ? ((data.delivered / sent) * 100).toFixed(2) : 0;
-            const openRate = data.delivered > 0 ? ((data.opened / data.delivered) * 100).toFixed(2) : 0;
-            const clickRate = data.delivered > 0 ? ((data.clicked / data.delivered) * 100).toFixed(2) : 0;
-            const bounceRate = sent > 0 ? ((data.bounced / sent) * 100).toFixed(2) : 0;
+        // Handle the response structure based on Elastic Email API documentation
+        // The response structure may vary, so adjust these field names as needed
+        const sent = (data.Delivered || 0) + (data.Bounced || 0) + (data.NotDelivered || 0);
+        const delivered = data.Delivered || 0;
+        const opened = data.Opened || 0;
+        const clicked = data.Clicked || 0;
+        const bounced = data.Bounced || 0;
+        const complaints = data.Complaints || 0;
+        const unsubscribed = data.Unsubscribed || 0;
 
-            const analytics = {
-                success: true,
-                period: {
-                    from: start.toISOString().split('T')[0],
-                    to: end.toISOString().split('T')[0]
-                },
-                overall: {
-                    // Raw numbers
-                    sent: sent,
-                    delivered: data.delivered || 0,
-                    opened: data.opened || 0,
-                    clicked: data.clicked || 0,
-                    bounced: data.bounced || 0,
-                    unsubscribed: data.unsubscribed || 0,
-                    complaints: data.complaints || 0,
-                    
-                    // Calculated rates
-                    deliveryRate: parseFloat(deliveryRate),
-                    openRate: parseFloat(openRate),
-                    clickRate: parseFloat(clickRate),
-                    bounceRate: parseFloat(bounceRate),
-                    unsubscribeRate: data.delivered > 0 ? parseFloat(((data.unsubscribed / data.delivered) * 100).toFixed(2)) : 0,
-                    complaintRate: data.delivered > 0 ? parseFloat(((data.complaints / data.delivered) * 100).toFixed(2)) : 0,
-                    
-                    // Advanced metrics
-                    clickToOpenRate: data.opened > 0 ? parseFloat(((data.clicked / data.opened) * 100).toFixed(2)) : 0,
-                    engagementRate: data.delivered > 0 ? parseFloat((((data.opened + data.clicked) / data.delivered) * 100).toFixed(2)) : 0
-                },
-                // Account health indicators
-                accountHealth: {
-                    status: getAccountHealthStatus(parseFloat(deliveryRate), parseFloat(bounceRate), data.complaints, data.delivered),
-                    reputationScore: calculateReputationScore(parseFloat(deliveryRate), parseFloat(bounceRate), data.complaints, data.delivered),
-                    recommendations: getAccountRecommendations(parseFloat(deliveryRate), parseFloat(bounceRate), data.complaints, data.delivered)
-                }
-            };
+        // Calculate rates
+        const deliveryRate = sent > 0 ? ((delivered / sent) * 100).toFixed(2) : 0;
+        const openRate = delivered > 0 ? ((opened / delivered) * 100).toFixed(2) : 0;
+        const clickRate = delivered > 0 ? ((clicked / delivered) * 100).toFixed(2) : 0;
+        const bounceRate = sent > 0 ? ((bounced / sent) * 100).toFixed(2) : 0;
+        const unsubscribeRate = delivered > 0 ? ((unsubscribed / delivered) * 100).toFixed(2) : 0;
+        const complaintRate = delivered > 0 ? ((complaints / delivered) * 100).toFixed(2) : 0;
 
-            res.json(analytics);
-        } else {
-            throw new Error('Failed to fetch overall analytics from Elastic Email');
-        }
+        // Advanced metrics
+        const clickToOpenRate = opened > 0 ? ((clicked / opened) * 100).toFixed(2) : 0;
+        const engagementRate = delivered > 0 ? (((opened + clicked) / delivered) * 100).toFixed(2) : 0;
+
+        res.json({
+            success: true,
+            period: {
+                from: start.toISOString().split('T')[0],
+                to: end.toISOString().split('T')[0]
+            },
+            overall: {
+                // Raw numbers
+                sent: sent,
+                delivered: delivered,
+                opened: opened,
+                clicked: clicked,
+                bounced: bounced,
+                unsubscribed: unsubscribed,
+                complaints: complaints,
+                
+                // Calculated rates
+                deliveryRate: parseFloat(deliveryRate),
+                openRate: parseFloat(openRate),
+                clickRate: parseFloat(clickRate),
+                bounceRate: parseFloat(bounceRate),
+                unsubscribeRate: parseFloat(unsubscribeRate),
+                complaintRate: parseFloat(complaintRate),
+                
+                // Advanced metrics
+                clickToOpenRate: parseFloat(clickToOpenRate),
+                engagementRate: parseFloat(engagementRate)
+            },
+            // Account health indicators
+            accountHealth: {
+                status: getAccountHealthStatus(parseFloat(deliveryRate), parseFloat(bounceRate), complaints, delivered),
+                reputationScore: calculateReputationScore(parseFloat(deliveryRate), parseFloat(bounceRate), complaints, delivered),
+                recommendations: getAccountRecommendations(parseFloat(deliveryRate), parseFloat(bounceRate), complaints, delivered)
+            }
+        });
+        
     } catch (error) {
         console.error('Error getting overall analytics:', error);
-        res.status(500).json({
+        
+        // Provide more detailed error information
+        const errorResponse = {
             success: false,
-            error: error.message
-        });
+            error: error.message,
+            details: error.response ? {
+                status: error.response.status,
+                statusText: error.response.statusText,
+                data: error.response.data
+            } : null
+        };
+        
+        res.status(error.response?.status || 500).json(errorResponse);
     }
 });
 

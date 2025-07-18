@@ -10,7 +10,7 @@ import { Mail, Users, BarChart3, Settings, Send, Plus, Eye, Edit, Trash2, Search
   CheckCircle, TrendingUp,Activity,Target, User, LogOut, Bell, Menu, X } from 'lucide-react';
 import CampaignAnalytics from './CampaignAnalytics';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { getProfile, setAuthentication } from '../redux/userSlice';
 import CampaignScheduler from './CampaignScheduler';
 import { BASEURL } from '../utility/config';
@@ -344,15 +344,18 @@ const handleEditUser = async (userData) => {
    const Sidebar = () => (
     <div className={`fixed inset-y-0 left-0 z-50 w-72 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 shadow-2xl transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`}>
       <div className="flex items-center justify-between h-20 px-6 border-b border-slate-700/50">
+        <Link to={"/"}>
         <div className="flex items-center">
-          <div className="p-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl">
-            <Mail className="h-8 w-8 text-white" />
+          <div className="p-1   rounded-xl">
+        
+           <img src="./BRAIN-AURA-LOGO.jpeg" alt="" width={"70px"} height={"60px"} />
           </div>
           <div className="ml-3">
-            <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">EmailPro</span>
+            <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">BrainAura </span>
             <p className="text-xs text-slate-400 font-medium">Marketing Suite</p>
           </div>
         </div>
+        </Link>
         <button
           onClick={() => setIsSidebarOpen(false)}
           className="lg:hidden p-2 rounded-lg hover:bg-slate-700/50 transition-colors"
@@ -459,28 +462,28 @@ const handleEditUser = async (userData) => {
   const API_BASE_URL = 'http://localhost:5000';
 
 const analyticsAPI = {
-  getDashboardStats: async (days = 30) => {
-    try {
-      const response = await fetch(`${BASEURL}/api/analytics/dashboard?days=${days}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include' // Add if using cookies
-      });
+  // getDashboardStats: async (days = 30) => {
+  //   try {
+  //     const response = await fetch(`${BASEURL}/api/analytics/dashboard?days=${days}`, {
+  //       method: 'GET',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //       credentials: 'include' // Add if using cookies
+  //     });
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+  //     if (!response.ok) {
+  //       throw new Error(`HTTP error! status: ${response.status}`);
+  //     }
       
-      const data = await response.json();
-      console.log('Dashboard stats response:', data); // Debug log
-      return data;
-    } catch (error) {
-      console.error('Error fetching dashboard stats:', error);
-      throw error;
-    }
-  },
+  //     const data = await response.json();
+  //     console.log('Dashboard stats response:', data); // Debug log
+  //     return data;
+  //   } catch (error) {
+  //     console.error('Error fetching dashboard stats:', error);
+  //     throw error;
+  //   }
+  // },
   
   getCampaignAnalytics: async (campaignName, startDate, endDate) => {
     try {
@@ -515,7 +518,7 @@ const analyticsAPI = {
       if (startDate) params.append('startDate', startDate);
       if (endDate) params.append('endDate', endDate);
       
-      const response = await fetch(`${BASEURL}/api/analytics/overall?${params}`, {
+      const response = await fetch(`${BASEURL}/api/analytics/overall`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -566,16 +569,7 @@ const analyticsAPI = {
 };
 
 const [stats, setStats] = useState({
-    totalSubscribers: 0,
-    totalCampaigns: 0,
-    openRate: 0,
-    clickRate: 0,
-    totalSent: 0,
-    totalDelivered: 0,
-    totalOpened: 0,
-    totalClicked: 0,
-    deliveryRate: 0,
-    engagementRate: 0
+   
   });
   
   // const [campaigns, setCampaigns] = useState([]);
@@ -584,6 +578,7 @@ const [stats, setStats] = useState({
   // const [error, setError] = useState(null);
   const [dateRange, setDateRange] = useState('30');
   const [lastUpdated, setLastUpdated] = useState(new Date());
+  console.log(stats)
 
   // Fetch dashboard analytics
 const fetchDashboardStats = async () => {
@@ -593,16 +588,17 @@ const fetchDashboardStats = async () => {
     
     console.log('Fetching dashboard stats for days:', dateRange); // Debug log
     
-    const response = await analyticsAPI.getDashboardStats(parseInt(dateRange));
+    const response = await analyticsAPI.getOverallAnalytics(parseInt(dateRange));
     
     console.log('Dashboard stats response:', response); // Debug log
     
     if (response && response.success) {
-      console.log('Setting stats:', response.summary); // Debug log
+      // Debug log
       setStats(prevStats => ({
         ...prevStats,
-        ...response.summary
+        ...response
       }));
+      
     } else {
       // Handle case where response exists but success is false
       const errorMessage = response?.error || response?.message || 'Failed to fetch dashboard stats';
@@ -763,7 +759,7 @@ useEffect(() => {
         {[
           { 
             title: 'Total Sent', 
-            value: stats.totalSent?.toLocaleString() || '0', 
+            value: stats.overall?.sent?.toLocaleString() || '0', 
             icon: Mail, 
             color: 'from-blue-500 to-cyan-500',
             bgColor: 'from-blue-50 to-cyan-50',
@@ -772,7 +768,7 @@ useEffect(() => {
           },
           { 
             title: 'Delivery Rate', 
-            value: `${stats.deliveryRate}%`, 
+            value: `${stats.overall?.deliveryRate}%`, 
             icon: CheckCircle, 
             color: 'from-emerald-500 to-green-500',
             bgColor: 'from-emerald-50 to-green-50',
@@ -781,7 +777,7 @@ useEffect(() => {
           },
           { 
             title: 'Open Rate', 
-            value: `${stats.openRate}%`, 
+            value: `${stats.overall?.openRate}%`, 
             icon: Eye, 
             color: 'from-amber-500 to-orange-500',
             bgColor: 'from-amber-50 to-orange-50',
@@ -790,7 +786,7 @@ useEffect(() => {
           },
           { 
             title: 'Click Rate', 
-            value: `${stats.clickRate}%`, 
+            value: `${stats.overall?.clickRate}%`, 
             icon: TrendingUp, 
             color: 'from-purple-500 to-pink-500',
             bgColor: 'from-purple-50 to-pink-50',
@@ -945,25 +941,31 @@ useEffect(() => {
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-600">Total Delivered</span>
               <span className="text-lg font-semibold text-gray-900">
-                {stats.totalDelivered?.toLocaleString() || '0'}
+                {stats.overall?.delivered?.toLocaleString() || '0'}
+              </span>
+            </div>
+             <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">Total Bounced</span>
+              <span className="text-lg font-semibold text-red-600">
+                {stats.overall?.bounced?.toLocaleString() || '0'}
               </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-600">Total Opened</span>
               <span className="text-lg font-semibold text-gray-900">
-                {stats.totalOpened?.toLocaleString() || '0'}
+                {stats.overall?.opened?.toLocaleString() || '0'}
               </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-600">Total Clicked</span>
               <span className="text-lg font-semibold text-gray-900">
-                {stats.totalClicked?.toLocaleString() || '0'}
+                {stats.overall?.clicked?.toLocaleString() || '0'}
               </span>
             </div>
             <div className="flex justify-between items-center pt-2 border-t">
               <span className="text-sm text-gray-600">Engagement Rate</span>
-              <span className={`text-lg font-semibold ${getPerformanceIndicator(stats.engagementRate || 0, 'open')}`}>
-                {stats.engagementRate || 0}%
+              <span className={`text-lg font-semibold ${getPerformanceIndicator(stats.overall?.engagementRate|| 0, 'open')}`}>
+                {stats.overall?.engagementRate || 0}%
               </span>
             </div>
           </div>
@@ -977,12 +979,28 @@ useEffect(() => {
               <span className="text-sm text-gray-600">Delivery Rate</span>
               <div className="flex items-center">
                 <div className={`w-3 h-3 rounded-full mr-2 ${
-                  stats.deliveryRate >= 95 ? 'bg-green-500' :
-                  stats.deliveryRate >= 90 ? 'bg-yellow-500' : 'bg-red-500'
+                  stats.overall?.deliveryRate >= 95 ? 'bg-green-500' :
+                  stats.overall?.deliveryRate >= 90 ? 'bg-yellow-500' : 'bg-red-500'
                 }`}></div>
                 <span className="text-sm font-medium">
-                  {stats.deliveryRate >= 95 ? 'Excellent' :
-                   stats.deliveryRate >= 90 ? 'Good' : 'Needs Improvement'}
+                  {stats.overall?.deliveryRate >= 95 ? 'Excellent' :
+                   stats.overall?.deliveryRate >= 90 ? 'Good' : 'Needs Improvement'}
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">Bounce Rate</span>
+              <div className="flex items-center">
+                <div className={`w-3 h-3 rounded-full mr-2 ${
+                  stats.overall?.bounceRate <= 2 ? 'bg-green-500' :
+                  stats.overall?.bounceRate <= 5 ? 'bg-yellow-500' : 'bg-red-500'
+                }`}></div>
+                <span className="text-sm font-medium">
+                  {stats.overall?.bounceRate <= 2 ? 'Excellent' :
+                   stats.overall?.bounceRate <= 5 ? 'Good' : 'Needs Improvement'}
+                </span>
+                <span className="text-sm text-gray-600 ml-2">
+                  ({stats.overall?.bounceRate || 0}%)
                 </span>
               </div>
             </div>
@@ -990,12 +1008,12 @@ useEffect(() => {
               <span className="text-sm text-gray-600">Open Rate</span>
               <div className="flex items-center">
                 <div className={`w-3 h-3 rounded-full mr-2 ${
-                  stats.openRate >= 20 ? 'bg-green-500' :
-                  stats.openRate >= 15 ? 'bg-yellow-500' : 'bg-red-500'
+                  stats.overall?.openRate >= 20 ? 'bg-green-500' :
+                  stats.overall?.openRate >= 15 ? 'bg-yellow-500' : 'bg-red-500'
                 }`}></div>
                 <span className="text-sm font-medium">
-                  {stats.openRate >= 20 ? 'Excellent' :
-                   stats.openRate >= 15 ? 'Good' : 'Needs Improvement'}
+                  {stats.overall?.openRate >= 20 ? 'Excellent' :
+                   stats.overall?.openRate >= 15 ? 'Good' : 'Needs Improvement'}
                 </span>
               </div>
             </div>
@@ -1003,12 +1021,12 @@ useEffect(() => {
               <span className="text-sm text-gray-600">Click Rate</span>
               <div className="flex items-center">
                 <div className={`w-3 h-3 rounded-full mr-2 ${
-                  stats.clickRate >= 3 ? 'bg-green-500' :
-                  stats.clickRate >= 2 ? 'bg-yellow-500' : 'bg-red-500'
+                  stats.overall?.clickRate >= 3 ? 'bg-green-500' :
+                  stats.overall?.clickRate >= 2 ? 'bg-yellow-500' : 'bg-red-500'
                 }`}></div>
                 <span className="text-sm font-medium">
-                  {stats.clickRate >= 3 ? 'Excellent' :
-                   stats.clickRate >= 2 ? 'Good' : 'Needs Improvement'}
+                  {stats.overall?.clickRate >= 3 ? 'Excellent' :
+                   stats.overall?.clickRate >= 2 ? 'Good' : 'Needs Improvement'}
                 </span>
               </div>
             </div>

@@ -1,69 +1,9 @@
-// import React from 'react'
-// import { useDispatch, useSelector } from 'react-redux'
-// import { getProfile, setAuthentication } from '../redux/userSlice';
-// import { toast } from 'react-toastify';
-// import { Link, useNavigate } from 'react-router-dom';
-
-// const Header = () => {
-
-//     const {userProfile, isAuthenticated} = useSelector((state)=>state.user)
-//     const dispatch = useDispatch();
-//     const navigate = useNavigate()
-
-//     const onLogout = () => {
-//         dispatch(setAuthentication(false));
-//         dispatch(getProfile(null));
-//         toast.success('Logout successfully!', {
-//           duration: 4000,
-//           position: 'top-right',
-//         });
-//         navigate("/");
-//       };
-
-//   return (
-//    <header className="bg-white dark:bg-gray-800 shadow">
-//       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-//         <h1 className="text-2xl font-bold text-blue-600 dark:text-blue-400">EmailFlow</h1>
-//         <div className="flex items-center space-x-2">
-//           {/* Theme Toggle Button */}
-          
-//           {/* User Authentication Section */}
-//           {userProfile ? (
-//             // Logged in state
-//             <div className="flex items-center space-x-3">
-//               <span className="text-gray-700 dark:text-gray-300 font-medium">
-//                 Welcome, {userProfile.name}
-//               </span>
-            
-//                 <button 
-//                   onClick={onLogout}
-//                   className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors font-medium"
-//                 >
-//                   Logout
-//                 </button>
-          
-//             </div>
-//           ) : (
-//             // Logged out state
-//             <Link to="/login">
-//               <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium">
-//                 Sign In
-//               </button>
-//             </Link>
-//           )}
-//         </div>
-//       </div>
-//     </header>
-//   )
-// }
-
-// export default Header
-
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from 'react-redux'
 import { getProfile, setAuthentication } from '../redux/userSlice';
 import { toast } from 'react-toastify';
+// import Logo from '../assets/BRAIN-AURA-LOGO.jpeg'
 
 // Enhanced Header Component
 const Header = () => {
@@ -98,10 +38,11 @@ const Header = () => {
     }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
         <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-24 h-12  flex items-center justify-center">
+            {/* <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
+            </svg> */}
+            <img src="./BRAIN-AURA-LOGO.jpeg" alt="" />
           </div>
           <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
             <a href="https://brainaura.in/" target="_blank">Brainaura Marketing Tool</a>

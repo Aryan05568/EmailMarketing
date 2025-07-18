@@ -11,6 +11,7 @@ const cors = require('cors');
 const supabase = require('./config/supabase_client');
 const authRoutes = require('./route/route');
 const analyticsRoutes = require("./route/analytics")
+const axios = require('axios');
 // const fetch = require('node-fetch');
 const { previewExcel } = require('./services/excelservice');
 const { parseHtmlTemplate } = require('./services/templateservice');
@@ -111,42 +112,8 @@ const uploadFormData = multer({
         fields: 50 // Maximum number of fields
     }
 });
-// const upload = multer({
-//     storage,
-//     limits: {
-//         fileSize: 10 * 1024 * 1024 // 10MB limit
-//     },
-//     fileFilter: (req, file, cb) => {
-//         if (file.fieldname === 'excel') {
-//             if (file.mimetype.includes('spreadsheet') || file.originalname.match(/\.(xlsx|xls)$/)) {
-//                 cb(null, true);
-//             } else {
-//                 cb(new Error('Only Excel files are allowed'), false);
-//             }
-//         } else if (file.fieldname === 'template') {
-//             if (file.mimetype === 'text/html' || file.originalname.match(/\.(html|htm)$/)) {
-//                 cb(null, true);
-//             } else {
-//                 cb(new Error('Only HTML files are allowed'), false);
-//             }
-//         } else if (file.fieldname === 'image') {
-//             if (file.mimetype.startsWith('image/') || file.originalname.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i)) {
-//                 cb(null, true);
-//             } else {
-//                 cb(new Error('Only image files are allowed'), false);
-//             }
-//         } else {
-//             cb(new Error('Invalid field name. Allowed fields: excel, template, image'), false);
-//         }
-//     }
-// });
 
 
-
-// Serve the HTML file (if you want to serve it from backend)
-// app.get('/', (req, res) => {
-//     res.sendFile(path.join(__dirname, 'public', 'index.html'));
-// });
 
 app.get('/ping', (req, res) => {
     res.send({
@@ -296,32 +263,7 @@ app.post('/upload-template', upload.single('template'), async (req, res) => {
 
 
 
-// app.post('/upload-template', upload.single('template'), (req, res) => {
-//     try { //neww
-//         if (!req.file) {
-//             return res.status(400).json({
-//                 success: false,
-//                 message: 'No template file uploaded'
-//             });
-//         }
 
-//         const htmlPath = req.file.path;
-//         const template = parseHtmlTemplate(htmlPath);
-
-//         res.json({
-//             success: true,
-//             filePath: htmlPath,
-//             template
-//         });
-//     } catch (err) {
-//         console.error('Error processing HTML template:', err);
-//         res.status(500).json({
-//             success: false,
-//             message: 'Error processing HTML template',
-//             error: err.message
-//         });
-//     }
-// });
 
 
 
@@ -456,144 +398,7 @@ app.post('/send', async(req, res) => {
 
 
 
-// app.post('/campaign', upload.fields([
-//     { name: 'excel', maxCount: 1 },
-//     { name: 'template', maxCount: 1 }
-// ]), async(req, res) => {
-//     try {
-//         // Check if Excel file exists
-//         if (!req.files || !req.files.excel || !req.files.excel[0]) {
-//             return res.status(400).json({
-//                 success: false,
-//                 message: 'Excel file is required'
-//             });
-//         }
 
-//         const excelFile = req.files.excel[0];
-//         const templateFile = req.files && req.files.template && req.files.template[0];
-
-//         // 1. Preview Excel data
-//         const excelPreview = previewExcel(excelFile.path);
-
-//         // 2. Extract values from body
-//         const {
-//             emailColumn,
-//             nameColumn,
-//             subjectLine,
-//             smtpServer,
-//             smtpPort,
-//             emailUser,
-//             emailPass,
-//             senderName,
-//             variables,
-//             delayBetweenEmails = 2000,
-//             templateContent, // Use templateContent instead of template
-//             campaign_name
-//         } = req.body;
-//         console.log('Received body:', req.body);
-
-//         // Validate required fields
-//         // if (!emailColumn || !subjectLine || !smtpServer || !emailUser || !emailPass) {
-//         //     return res.status(400).json({
-//         //         success: false,
-//         //         message: 'Missing required fields: emailColumn, subjectLine, smtpServer, emailUser, emailPass'
-//         //     });
-//         // }
-
-//         // Validate SMTP
-//         // await testSMTPConnection({ smtpServer, smtpPort, emailUser, emailPass });
-
-//         // 3. Use template content or uploaded template file
-//         let finalTemplateContent = '';
-        
-//         if (templateContent && typeof templateContent === 'string' && templateContent.trim() !== '') {
-//             finalTemplateContent = templateContent.trim();
-//         } else if (templateFile && templateFile.path) {
-//             finalTemplateContent = parseHtmlTemplate(templateFile.path);
-//         } else {
-//             return res.status(400).json({
-//                 success: false,
-//                 message: 'Either template content or template file is required'
-//             });
-//         }
-
-//         // 4. Save campaign to Supabase
-//         const { data, error } = await supabase
-//             .from('campaigns')
-//             .insert([{
-//                 excel_path: excelFile.path,
-//                 html_path: templateFile ? templateFile.path : null,
-//                 email_column: emailColumn,
-//                 name_column: nameColumn,
-//                 subject_line: subjectLine,
-//                 smtp_server: smtpServer,
-//                 smtp_port: smtpPort,
-//                 email_user: emailUser,
-//                 email_pass: emailPass,
-//                 sender_name: senderName,
-//                 variables,
-//                 delay_between_emails: parseInt(delayBetweenEmails),
-//                 template: finalTemplateContent,
-//                 campaign_name: campaign_name,
-//                 status: 'pending'
-//             }])
-//             .select()
-//             .single();
-
-//         if (error) throw error;
-
-//         // 5. START EMAIL SENDING IMMEDIATELY USING HELPERS
-//         const recipientsRaw = readExcelData(excelFile.path);
-//         const recipients = filterValidRecipients(recipientsRaw, emailColumn);
-//         const transporter = createTransporter({ smtpServer, smtpPort, emailUser, emailPass, delayBetweenEmails });
-
-//         const jobId = `campaign-${data.id}`;
-//         const jobInfo = {
-//             id: jobId,
-//             total: recipients.length,
-//             sentEmails: 0,
-//             failedEmails: 0,
-//             shouldStop: false,
-//             completed: false,
-//             startedAt: new Date()
-//         };
-//         activeSendingJobs.set(jobId, jobInfo);
-
-//         // Start sending (non-blocking)
-//         sendEmailsJob({
-//             jobId,
-//             recipients,
-//             emailColumn,
-//             nameColumn,
-//             subjectLine,
-//             senderName,
-//             templateContent: finalTemplateContent,
-//             variables: Array.isArray(variables) ? variables : JSON.parse(variables || '[]'),
-//             transporter,
-//             delayBetweenEmails: parseInt(delayBetweenEmails),
-//             activeSendingJobs,
-//              uploadsPath: './uploads/images/' // Add this for CID support
-//         });
-
-//         // 6. Respond with success
-//         res.json({
-//             success: true,
-//             message: 'Campaign created and emails are being sent',
-//             jobId: jobId,
-//             total: recipients.length,
-//             campaign: data,
-//             excelPreview
-//         });
-
-//     } catch (err) {
-//         console.error('Error creating campaign:', err);
-//         res.status(500).json({
-//             success: false,
-//             message: 'Error creating campaign',
-//             error: err.message
-//         });
-//     }
-// });
 
 async function downloadFromCloudinaryToTemp(url, filename) {
     
@@ -616,7 +421,7 @@ async function downloadFromCloudinaryToTemp(url, filename) {
     return tempPath;
 }
 
-app.post('/campaign',uploadFormData.none(), async (req, res) => {
+app.post('/campaign', uploadFormData.none(), async (req, res) => {
     let tempExcelPath = null;
     let tempTemplatePath = null;
 
@@ -720,92 +525,10 @@ app.post('/campaign',uploadFormData.none(), async (req, res) => {
             });
         }
 
-        // 4. Save campaign to Supabase with Cloudinary URLs
-        const { data: campaignData, error: campaignError } = await supabase
-            .from('campaigns')
-            .insert([{
-                excel_path: excelCloudinaryUrl, // Store Cloudinary URL instead of local path
-                excel_public_id: excelPublicId, // Store public ID for reference
-                html_path: templateCloudinaryUrl || null, // Store Cloudinary URL
-                // html_public_id: templatePublicId || null, // Store public ID
-                email_column: emailColumn,
-                name_column: nameColumn,
-                subject_line: subjectLine,
-                smtp_server: smtpServer ,
-                smtp_port: smtpPort || 587,
-                email_user: emailUser,
-                email_pass: emailPass,
-                sender_name: senderName,
-                variables: typeof variables === 'string' ? variables : JSON.stringify(variables || []),
-                delay_between_emails: parseInt(delayBetweenEmails),
-                template: finalTemplateContent,
-                campaign_name: campaign_name,
-                status: 'pending',
-                created_at: new Date().toISOString()
-            }])
-            .select()
-            .single();
-
-
-//   if (campaignData) {
-//     try {
-//         const recipientEmails = recipients.map(r => r[emailColumn]);
-//         console.log('ElasticEmail Payload:', {
-//             Name: campaign_name,
-//             Subject: subjectLine,
-//             From: emailUser,
-//             FromName: senderName,
-//             Recipients: recipientEmails
-//         });
-
-//         if (recipientEmails.length === 0) {
-//             throw new Error('No recipient emails available for Elastic Email campaign');
-//         }
-
-//         const elasticResponse = await axios.post('https://api.elasticemail.com/v4/campaigns', {
-//             Name: campaign_name,
-//             Subject: subjectLine,
-//             From: emailUser,
-//             FromName: senderName,
-//             Content: {
-//                 Body: [
-//                     {
-//                         ContentType: "HTML",
-//                         Charset: "utf-8",
-//                         Content: finalTemplateContent
-//                     }
-//                 ]
-//             },
-//             Recipients: {
-//                 Emails: recipientEmails
-//             }
-//         }, {
-//             headers: {
-//                 'X-ElasticEmail-ApiKey': process.env.ELASTIC_EMAIL_API_KEY,
-//                 'Content-Type': 'application/json'
-//             }
-//         });
-
-//         console.log('Elastic Email Campaign Created:', elasticResponse.data);
-//     } catch (elasticError) {
-//         const elasticErrorMessage = elasticError.response?.data || elasticError.response?.statusText || elasticError.message || 'Unknown Error';
-//         logError('ElasticEmail Campaign', elasticErrorMessage, { campaignId: campaignData.id });
-//         console.warn('Elastic Email campaign creation failed:', elasticErrorMessage);
-//     }
-// }
-
-
-        if (campaignError) {
-            logError('Campaign Creation', campaignError);
-            throw new Error(`Failed to create campaign: ${campaignError.message}`);
-        }
-
-  
-
-        // 7. START EMAIL SENDING WITH TRACKING
+        // 4. Process recipients first (needed for Elastic Email)
         let recipients = [];
         try {
-            const recipientsRaw = readExcelData(tempExcelPath); // Use temp file for processing
+            const recipientsRaw = readExcelData(tempExcelPath);
             recipients = filterValidRecipients(recipientsRaw, emailColumn);
             
             if (recipients.length === 0) {
@@ -820,10 +543,168 @@ app.post('/campaign',uploadFormData.none(), async (req, res) => {
             });
         }
 
+        // 5. Save campaign to Supabase with Cloudinary URLs
+        const { data: campaignData, error: campaignError } = await supabase
+            .from('campaigns')
+            .insert([{
+                excel_path: excelCloudinaryUrl,
+                excel_public_id: excelPublicId,
+                html_path: templateCloudinaryUrl || null,
+                email_column: emailColumn,
+                name_column: nameColumn,
+                subject_line: subjectLine,
+                smtp_server: smtpServer,
+                smtp_port: smtpPort || 587,
+                email_user: emailUser,
+                email_pass: emailPass,
+                sender_name: senderName,
+                variables: typeof variables === 'string' ? variables : JSON.stringify(variables || []),
+                delay_between_emails: parseInt(delayBetweenEmails),
+                template: finalTemplateContent,
+                campaign_name: campaign_name,
+                status: 'pending',
+                created_at: new Date().toISOString()
+            }])
+            .select()
+            .single();
+
+        if (campaignError) {
+            logError('Campaign Creation', campaignError);
+            throw new Error(`Failed to create campaign: ${campaignError.message}`);
+        }
+
+        // 6. CREATE ELASTIC EMAIL CAMPAIGN USING V2 API
+//         let elasticEmailCampaignId = null;
+//         if (campaignData) {
+//             try {
+//                 const recipientEmails = recipients.map(r => r[emailColumn]);
+//                 console.log('ElasticEmail V2 Payload:', {
+//                     name: campaign_name,
+//                     subject: subjectLine,
+//                     from: emailUser,
+//                     fromName: senderName,
+//                     recipients: recipientEmails
+//                 });
+
+//                 if (recipientEmails.length === 0) {
+//                     throw new Error('No recipient emails available for Elastic Email campaign');
+//                 }
+
+
+//                 const v4Payload = {
+//   Name: campaign_name,
+//   Status: "Active", // or "Draft"
+//   Recipients: {
+//     ListNames: ["YourList"], // You must manage Elastic Email lists/segments separately
+//     SegmentNames: []
+//   },
+//   Content: [
+//     {
+//       TemplateName: "DirectSend",
+//       EmailFrom: emailUser,
+//       EmailFromName: senderName,
+//       Subject: subjectLine,
+//       BodyHtml: finalTemplateContent,
+//       BodyText: "" // Optional plain text version
+//     }
+//   ],
+//   Options: {
+//     TrackOpens: "true",
+//     TrackClicks: "true",
+//     DeliveryOptimization: "None",
+//     ScheduleFor: null,
+//     TriggerFrequency: 0,
+//     TriggerCount: 0,
+//     SplitOptions: {}
+//   }
+// };
+
+// const elasticResponse = await axios.post('https://api.elasticemail.com/v4/campaigns', v4Payload, {
+//   headers: {
+//     'Content-Type': 'application/json',
+//     'Authorization': `Bearer ${process.env.ELASTIC_EMAIL_API_KEY}`
+//   }
+// });
+
+// console.log(elasticResponse)
+
+//                 // Create form data for v2 API
+//                 // const formData = new URLSearchParams();
+//                 // formData.append('apikey', process.env.ELASTIC_EMAIL_API_KEY);
+//                 // formData.append('name', campaign_name);
+//                 // formData.append('subject', subjectLine);
+//                 // formData.append('from', emailUser);
+//                 // formData.append('fromName', senderName);
+//                 // formData.append('bodyHtml', finalTemplateContent);
+//                 // formData.append('bodyText', ''); // Optional plain text version
+//                 // formData.append('encodingType', '0'); // 0 = UTF-8
+//                 // formData.append('isTemplate', 'false');
+                
+//                 // // Add recipients - v2 API accepts comma-separated emails
+//                 // formData.append('to', recipientEmails.join(','));
+                
+//                 // // Additional settings for better analytics
+//                 // formData.append('trackOpens', 'true');
+//                 // formData.append('trackClicks', 'true');
+//                 // formData.append('trackDelivered', 'true');
+                
+//                 // Create campaign using v2 API
+//                 // const elasticResponse = await axios.post('https://api.elasticemail.com/v2/email/campaign/add', formData, {
+//                 //     headers: {
+//                 //         'Content-Type': 'application/x-www-form-urlencoded'
+//                 //     }
+//                 // });
+
+//                 if (elasticResponse.data.success) {
+//                     elasticEmailCampaignId = elasticResponse.data.data.campaignid;
+//                     console.log('Elastic Email V2 Campaign Created:', elasticResponse.data);
+
+//                     // Update campaign with Elastic Email ID
+//                     await supabase
+//                         .from('campaigns')
+//                         .update({ 
+//                             elastic_email_campaign_id: elasticEmailCampaignId
+//                         })
+//                         .eq('id', campaignData.id);
+
+//                     // Optional: Send the campaign immediately
+//                     // You can uncomment this if you want to send immediately
+//                     /*
+//                     const sendFormData = new URLSearchParams();
+//                     sendFormData.append('apikey', process.env.ELASTIC_EMAIL_API_KEY);
+//                     sendFormData.append('campaignid', elasticEmailCampaignId);
+                    
+//                     await axios.post('https://api.elasticemail.com/v2/email/campaign/send', sendFormData, {
+//                         headers: {
+//                             'Content-Type': 'application/x-www-form-urlencoded'
+//                         }
+//                     });
+                    
+//                     console.log('Elastic Email V2 Campaign Sent');
+//                     */
+
+//                 } else {
+//                     throw new Error(elasticResponse.data.error || 'Failed to create Elastic Email campaign');
+//                 }
+
+//             } catch (elasticError) {
+//                 const elasticErrorMessage = elasticError.response?.data?.error || 
+//                                           elasticError.response?.data || 
+//                                           elasticError.response?.statusText || 
+//                                           elasticError.message || 
+//                                           'Unknown Error';
+//                 logError('ElasticEmail Campaign V2', elasticErrorMessage, { campaignId: campaignData.id });
+//                 console.warn('Elastic Email campaign creation failed:', elasticErrorMessage);
+                
+//                 // Don't fail the entire campaign creation if Elastic Email fails
+//                 // Just log the error and continue with regular email sending
+//             }
+//         }
+
+        // 7. START EMAIL SENDING WITH TRACKING
         // Create transporter
         const transporter = createTransporter({ 
             delayBetweenEmails: parseInt(delayBetweenEmails),
-            // configurationSet: configSetName
         });
 
         const jobId = `campaign-${campaignData.id}`;
@@ -835,7 +716,8 @@ app.post('/campaign',uploadFormData.none(), async (req, res) => {
             failedEmails: 0,
             shouldStop: false,
             completed: false,
-            startedAt: new Date().toISOString()
+            startedAt: new Date().toISOString(),
+            // elasticEmailCampaignId: elasticEmailCampaignId
         };
         
         // Store job info in your tracking system
@@ -855,9 +737,8 @@ app.post('/campaign',uploadFormData.none(), async (req, res) => {
             transporter,
             delayBetweenEmails: parseInt(delayBetweenEmails),
             activeSendingJobs,
-            uploadsPath: './uploads/images/', // You might want to change this to use Cloudinary URLs
+            uploadsPath: './uploads/images/',
             campaignId: campaignData.id,
-            // configurationSet: configSetName,
         }).then(async () => {
             // Update campaign status to completed when email sending is finished
             try {
@@ -865,7 +746,6 @@ app.post('/campaign',uploadFormData.none(), async (req, res) => {
                     .from('campaigns')
                     .update({ 
                         status: 'completed',
-                        // completed_at: new Date().toISOString()
                     })
                     .eq('id', campaignData.id);
 
@@ -892,8 +772,6 @@ app.post('/campaign',uploadFormData.none(), async (req, res) => {
                     .from('campaigns')
                     .update({ 
                         status: 'failed',
-                        // error_message: error.message,
-                        // completed_at: new Date().toISOString()
                     })
                     .eq('id', campaignData.id);
 
@@ -917,7 +795,7 @@ app.post('/campaign',uploadFormData.none(), async (req, res) => {
                 id: campaignData.id,
                 name: campaignData.campaign_name,
                 status: 'sending',
-                // configurationSet: configSetName
+                // elasticEmailCampaignId: elasticEmailCampaignId
             },
             excelPreview
         });
@@ -952,38 +830,19 @@ app.post('/campaign',uploadFormData.none(), async (req, res) => {
 });
 
 
-// app.post('/campaign', upload.fields([
-//     { name: 'excel', maxCount: 1 },
-//     { name: 'template', maxCount: 1 }
-// ]), async(req, res) => {
+// app.post('/campaign',uploadFormData.none(), async (req, res) => {
+//     let tempExcelPath = null;
+//     let tempTemplatePath = null;
+
+//     console.log(req.body)
+    
 //     try {
-//         // Check if Excel file exists
-//         // if (!req.files || !req.files.excel || !req.files.excel[0]) {
-//         //     return res.status(400).json({
-//         //         success: false,
-//         //         message: 'Excel file is required'
-//         //     });
-//         // }
-
-//         const excelFile = req.files
-//         console.log(excelFile)
-//         const templateFile = req.files && req.files.template && req.files.template[0];
-
-//         // 1. Preview Excel data
-//         let excelPreview;
-//         try {
-//             excelPreview = previewExcel(excelFile.path);
-//         } catch (error) {
-//             logError('Excel Preview', error, { filePath: excelFile.path });
-//             return res.status(400).json({
-//                 success: false,
-//                 message: 'Invalid Excel file format',
-//                 error: error.message
-//             });
-//         }
-
-//         // 2. Extract and validate values from body
+//         // Extract Cloudinary URLs and other data from form
 //         const {
+//             excelCloudinaryUrl,
+//             excelPublicId,
+//             templateCloudinaryUrl,
+//             templatePublicId,
 //             emailColumn,
 //             nameColumn,
 //             subjectLine,
@@ -1001,10 +860,18 @@ app.post('/campaign',uploadFormData.none(), async (req, res) => {
 //         console.log('Received campaign request:', {
 //             campaign_name,
 //             emailColumn,
-//             totalRecipients: excelPreview?.length || 0
+//             excelCloudinaryUrl,
+//             templateCloudinaryUrl
 //         });
 
 //         // Validate required fields
+//         if (!excelCloudinaryUrl) {
+//             return res.status(400).json({
+//                 success: false,
+//                 message: 'Excel file URL is required'
+//             });
+//         }
+
 //         try {
 //             validateEmailConfig({ emailColumn, subjectLine });
 //         } catch (error) {
@@ -1014,19 +881,49 @@ app.post('/campaign',uploadFormData.none(), async (req, res) => {
 //             });
 //         }
 
-//         // 3. Use template content or uploaded template file
+//         // 1. Download Excel file from Cloudinary to temporary location for processing
+//         try {
+//             const excelFileName = `excel_${Date.now()}.xlsx`;
+//             tempExcelPath = await downloadFromCloudinaryToTemp(excelCloudinaryUrl, excelFileName);
+//             console.log('Excel file downloaded to:', tempExcelPath);
+//         } catch (error) {
+//             logError('Excel Download', error, { url: excelCloudinaryUrl });
+//             return res.status(400).json({
+//                 success: false,
+//                 message: 'Failed to download Excel file from cloud storage',
+//                 error: error.message
+//             });
+//         }
+
+//         // 2. Preview Excel data using temporary file
+//         let excelPreview;
+//         try {
+//             excelPreview = previewExcel(tempExcelPath);
+//         } catch (error) {
+//             logError('Excel Preview', error, { filePath: tempExcelPath });
+//             return res.status(400).json({
+//                 success: false,
+//                 message: 'Invalid Excel file format',
+//                 error: error.message
+//             });
+//         }
+
+//         // 3. Handle template - either from Cloudinary or from content
 //         let finalTemplateContent = '';
         
 //         if (templateContent && typeof templateContent === 'string' && templateContent.trim() !== '') {
 //             finalTemplateContent = templateContent.trim();
-//         } else if (templateFile && templateFile.path) {
+//         } else if (templateCloudinaryUrl) {
 //             try {
-//                 finalTemplateContent = parseHtmlTemplate(templateFile.path);
+//                 // Download template file from Cloudinary
+//                 const templateFileName = `template_${Date.now()}.html`;
+//                 tempTemplatePath = await downloadFromCloudinaryToTemp(templateCloudinaryUrl, templateFileName);
+//                 finalTemplateContent = parseHtmlTemplate(tempTemplatePath);
 //             } catch (error) {
-//                 logError('Template Parsing', error, { filePath: templateFile.path });
+//                 logError('Template Download/Parse', error, { url: templateCloudinaryUrl });
 //                 return res.status(400).json({
 //                     success: false,
-//                     message: 'Failed to parse HTML template',
+//                     message: 'Failed to download or parse HTML template',
 //                     error: error.message
 //                 });
 //             }
@@ -1037,16 +934,36 @@ app.post('/campaign',uploadFormData.none(), async (req, res) => {
 //             });
 //         }
 
-//         // 4. Save campaign to Supabase
+
+//         let recipients = [];
+//         try {
+//             const recipientsRaw = readExcelData(tempExcelPath);
+//             recipients = filterValidRecipients(recipientsRaw, emailColumn);
+            
+//             if (recipients.length === 0) {
+//                 throw new Error('No valid email addresses found in the Excel file');
+//             }
+//         } catch (error) {
+//             logError('Recipients Processing', error, { excelPath: tempExcelPath });
+//             return res.status(400).json({
+//                 success: false,
+//                 message: 'Failed to process recipients',
+//                 error: error.message
+//             });
+//         }
+
+//         // 4. Save campaign to Supabase with Cloudinary URLs
 //         const { data: campaignData, error: campaignError } = await supabase
 //             .from('campaigns')
 //             .insert([{
-//                 excel_path: excelFile.path,
-//                 html_path: templateFile ? templateFile.path : null,
+//                 excel_path: excelCloudinaryUrl, // Store Cloudinary URL instead of local path
+//                 excel_public_id: excelPublicId, // Store public ID for reference
+//                 html_path: templateCloudinaryUrl || null, // Store Cloudinary URL
+//                 // html_public_id: templatePublicId || null, // Store public ID
 //                 email_column: emailColumn,
 //                 name_column: nameColumn,
 //                 subject_line: subjectLine,
-//                 smtp_server: smtpServer || 'email-smtp.ap-south-1.amazonaws.com',
+//                 smtp_server: smtpServer ,
 //                 smtp_port: smtpPort || 587,
 //                 email_user: emailUser,
 //                 email_pass: emailPass,
@@ -1061,58 +978,24 @@ app.post('/campaign',uploadFormData.none(), async (req, res) => {
 //             .select()
 //             .single();
 
+
+
+
+
 //         if (campaignError) {
 //             logError('Campaign Creation', campaignError);
 //             throw new Error(`Failed to create campaign: ${campaignError.message}`);
 //         }
 
-//         // 5. CREATE SES CONFIGURATION SET FOR TRACKING
-//         const configSetName = `campaign-${campaignData.id}-tracking`;
-        
-//         try {
-//             await createConfigurationSet(configSetName);
-//         } catch (configError) {
-//             logError('Configuration Set Creation', configError, { configSetName });
-//             // Continue even if config set creation fails - email can still be sent
-//             console.warn('Continuing without configuration set due to error:', configError.message);
-//         }
-
-//         // 6. Update campaign with configuration set name
-//         const { error: updateError } = await supabase
-//             .from('campaigns')
-//             .update({ 
-//                 configuration_set: configSetName,
-//                 status: 'sending',
-//                 created_at: new Date().toISOString()
-//             })
-//             .eq('id', campaignData.id);
-
-//         if (updateError) {
-//             logError('Campaign Update', updateError, { campaignId: campaignData.id });
-//         }
+  
 
 //         // 7. START EMAIL SENDING WITH TRACKING
-//         let recipients = [];
-//         try {
-//             const recipientsRaw = readExcelData(excelFile.path);
-//             recipients = filterValidRecipients(recipientsRaw, emailColumn);
-            
-//             if (recipients.length === 0) {
-//                 throw new Error('No valid email addresses found in the Excel file');
-//             }
-//         } catch (error) {
-//             logError('Recipients Processing', error, { excelPath: excelFile.path });
-//             return res.status(400).json({
-//                 success: false,
-//                 message: 'Failed to process recipients',
-//                 error: error.message
-//             });
-//         }
+       
 
 //         // Create transporter
 //         const transporter = createTransporter({ 
 //             delayBetweenEmails: parseInt(delayBetweenEmails),
-//             configurationSet: configSetName
+//             // configurationSet: configSetName
 //         });
 
 //         const jobId = `campaign-${campaignData.id}`;
@@ -1138,23 +1021,61 @@ app.post('/campaign',uploadFormData.none(), async (req, res) => {
 //             nameColumn,
 //             subjectLine,
 //             senderName,
+//             emailUser,
 //             templateContent: finalTemplateContent,
 //             variables: Array.isArray(variables) ? variables : JSON.parse(variables || '[]'),
 //             transporter,
 //             delayBetweenEmails: parseInt(delayBetweenEmails),
 //             activeSendingJobs,
-//             uploadsPath: './uploads/images/',
+//             uploadsPath: './uploads/images/', // You might want to change this to use Cloudinary URLs
 //             campaignId: campaignData.id,
-//             configurationSet: configSetName,
-           
-//         }).catch(error => {
+//             // configurationSet: configSetName,
+//         }).then(async () => {
+//             // Update campaign status to completed when email sending is finished
+//             try {
+//                 const { error: updateError } = await supabase
+//                     .from('campaigns')
+//                     .update({ 
+//                         status: 'completed',
+//                         // completed_at: new Date().toISOString()
+//                     })
+//                     .eq('id', campaignData.id);
+
+//                 if (updateError) {
+//                     logError('Campaign Status Update', updateError, { campaignId: campaignData.id });
+//                 } else {
+//                     console.log(`Campaign ${campaignData.id} status updated to completed`);
+//                 }
+//             } catch (updateErr) {
+//                 logError('Campaign Status Update Error', updateErr, { campaignId: campaignData.id });
+//             }
+//         }).catch(async (error) => {
 //             logError('Email Sending Job', error, { jobId, campaignId: campaignData.id });
-//             // Update job status
 //             const jobData = activeSendingJobs.get(jobId);
 //             if (jobData) {
 //                 jobData.error = error.message;
 //                 jobData.completed = true;
 //                 jobData.endTime = new Date().toISOString();
+//             }
+            
+//             // Update campaign status to failed when there's an error
+//             try {
+//                 const { error: updateError } = await supabase
+//                     .from('campaigns')
+//                     .update({ 
+//                         status: 'failed',
+//                         // error_message: error.message,
+//                         // completed_at: new Date().toISOString()
+//                     })
+//                     .eq('id', campaignData.id);
+
+//                 if (updateError) {
+//                     logError('Campaign Status Update (Failed)', updateError, { campaignId: campaignData.id });
+//                 } else {
+//                     console.log(`Campaign ${campaignData.id} status updated to failed`);
+//                 }
+//             } catch (updateErr) {
+//                 logError('Campaign Status Update Error (Failed)', updateErr, { campaignId: campaignData.id });
 //             }
 //         });
 
@@ -1168,7 +1089,7 @@ app.post('/campaign',uploadFormData.none(), async (req, res) => {
 //                 id: campaignData.id,
 //                 name: campaignData.campaign_name,
 //                 status: 'sending',
-//                 configurationSet: configSetName
+//                 // configurationSet: configSetName
 //             },
 //             excelPreview
 //         });
@@ -1180,100 +1101,29 @@ app.post('/campaign',uploadFormData.none(), async (req, res) => {
 //             message: 'Error creating campaign',
 //             error: err.message
 //         });
-//     }
-// });
-
-
-// app.get('/campaign/:id/stats', async (req, res) => {
-//     try {
-//         const { id } = req.params;
-//         const { startDate, endDate } = req.query;
-        
-//         // Get campaign details
-//         const { data: campaign, error } = await supabase
-//             .from('campaigns')
-//             .select('*')
-//             .eq('id', id)
-//             .single();
-            
-//         if (error || !campaign) {
-//             return res.status(404).json({
-//                 success: false,
-//                 message: 'Campaign not found'
-//             });
-//         }
-        
-//         // const configSetName = campaign.configuration_set;
-//         // if (!configSetName) {
-//         //     return res.status(400).json({
-//         //         success: false,
-//         //         message: 'Campaign does not have tracking enabled'
-//         //     });
-//         // }
-        
-//         // Get statistics from CloudWatch
-//         const start = startDate ? new Date(startDate) : new Date(campaign.created_at);
-//         const end = endDate ? new Date(endDate) : new Date();
-        
-//         let stats = {};
-//         try {
-//             stats = await getCampaignStats(configSetName, start, end);
-//         } catch (error) {
-//             logError('Campaign Stats Retrieval', error, { configSetName, campaignId: id });
-//             return res.status(500).json({
-//                 success: false,
-//                 message: 'Failed to retrieve campaign statistics',
-//                 error: error.message
-//             });
-//         }
-        
-//         // Calculate derived metrics
-//         const deliveryRate = stats.Send > 0 ? (stats.Delivery / stats.Send * 100).toFixed(2) : 0;
-//         const bounceRate = stats.Send > 0 ? (stats.Bounce / stats.Send * 100).toFixed(2) : 0;
-//         const complaintRate = stats.Send > 0 ? (stats.Complaint / stats.Send * 100).toFixed(2) : 0;
-//         const openRate = stats.Delivery > 0 ? (stats.Open / stats.Delivery * 100).toFixed(2) : 0;
-//         const clickRate = stats.Delivery > 0 ? (stats.Click / stats.Delivery * 100).toFixed(2) : 0;
-        
-//         res.json({
-//             success: true,
-//             campaign: {
-//                 id: campaign.id,
-//                 name: campaign.campaign_name,
-//                 // configurationSet: configSetName,
-//                 status: campaign.status,
-//                 createdAt: campaign.created_at,
-//                 startedAt: campaign.started_at
-//             },
-//             statistics: {
-//                 sent: stats.Send || 0,
-//                 delivered: stats.Delivery || 0,
-//                 bounced: stats.Bounce || 0,
-//                 complaints: stats.Complaint || 0,
-//                 opens: stats.Open || 0,
-//                 clicks: stats.Click || 0
-//             },
-//             rates: {
-//                 deliveryRate: `${deliveryRate}%`,
-//                 bounceRate: `${bounceRate}%`,
-//                 complaintRate: `${complaintRate}%`,
-//                 openRate: `${openRate}%`,
-//                 clickRate: `${clickRate}%`
-//             },
-//             period: {
-//                 startDate: start.toISOString(),
-//                 endDate: end.toISOString()
+//     } finally {
+//         // Clean up temporary files
+//         if (tempExcelPath && fs.existsSync(tempExcelPath)) {
+//             try {
+//                 fs.unlinkSync(tempExcelPath);
+//                 console.log('Cleaned up temp Excel file:', tempExcelPath);
+//             } catch (cleanupError) {
+//                 console.error('Error cleaning up temp Excel file:', cleanupError);
 //             }
-//         });
+//         }
         
-//     } catch (err) {
-//         logError('Campaign Stats Route', err, { campaignId: req.params.id });
-//         res.status(500).json({
-//             success: false,
-//             message: 'Error retrieving campaign statistics',
-//             error: err.message
-//         });
+//         if (tempTemplatePath && fs.existsSync(tempTemplatePath)) {
+//             try {
+//                 fs.unlinkSync(tempTemplatePath);
+//                 console.log('Cleaned up temp template file:', tempTemplatePath);
+//             } catch (cleanupError) {
+//                 console.error('Error cleaning up temp template file:', cleanupError);
+//             }
+//         }
 //     }
 // });
+
+
 
 // Enhanced route for tracking email opens
 app.get('/api/track/open/:campaignId', async (req, res) => {
@@ -1494,6 +1344,47 @@ app.delete('/campaigns/:id', async (req, res) => {
     }
 });
 
+
+app.post('/schedule/:campaignId', async (req, res) => {
+    try {
+        console.log("endpoint hit")
+        const { campaignId } = req.params;
+        const { dateTime, timezone = 'Asia/Kolkata' } = req.body;
+
+        // Validate input
+        if (!dateTime) {
+            return res.status(400).json({
+                success: false,
+                message: 'Date and time are required'
+            });
+        }
+
+        // Validate datetime
+        const validation = campaignScheduler.validateDateTime(dateTime);
+        if (!validation.valid) {
+            return res.status(400).json({
+                success: false,
+                message: validation.error
+            });
+        }
+
+        // Schedule the campaign
+        const result = await campaignScheduler.scheduleFromCalendar(
+            campaignId, 
+            dateTime, 
+            timezone
+        );
+
+        res.json(result);
+
+    } catch (error) {
+        console.error('Error scheduling campaign:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+});
 // app.post('/upload-image', upload.single('image'), (req, res) => {
 //     try {
 //         const imageUrl = `/uploads/images/${req.file.filename}`;
@@ -2042,3 +1933,9 @@ app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
     // console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
+
+
+
+
+
+
