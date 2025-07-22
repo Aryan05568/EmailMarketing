@@ -432,12 +432,7 @@ const handleEditUser = async (userData) => {
         </div>
 
         <div className="flex items-center space-x-4">
-          <div className="relative">
-            <button className="p-3 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-all duration-200 relative">
-              <Bell className="h-6 w-6" />
-              <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center animate-pulse">3</span>
-            </button>
-          </div>
+        
           
           <div className="flex items-center space-x-3 bg-gray-50 rounded-xl px-4 py-2">
             <div className="h-10 w-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
@@ -699,7 +694,7 @@ const fetchCampaignAnalytics = async () => {
   console.log('useEffect: Fetching campaigns and dashboard stats'); // Debug log
   fetchCampaigns();
   fetchDashboardStats();
-}, [dateRange]); // Add dateRange as dependency
+}, [activeTab]); // Add dateRange as dependency
 
 useEffect(() => {
   console.log('useEffect: Campaigns changed, fetching analytics', campaigns); // Debug log
@@ -902,18 +897,7 @@ useEffect(() => {
                       </td>
                       <td className="px-6 py-5 text-sm font-medium text-gray-900">
                         <div className="flex space-x-2">
-                          <button 
-                            className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50"
-                            title="View Details"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </button>
-                          <button 
-                            className="text-purple-600 hover:text-purple-900 p-1 rounded hover:bg-purple-50"
-                            title="View Analytics"
-                          >
-                            <BarChart3 className="h-4 w-4" />
-                          </button>
+                          
                           <button 
                             onClick={() => deleteCampaign(campaign.id)} 
                             className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"
@@ -1249,7 +1233,7 @@ useEffect(() => {
       case 'dashboard':
         return <DashboardContent />;
       case 'campaigns':
-        return <CampaignAnalytics campaigns={campaigns} deleteCampaign={deleteCampaign} />;
+        return <CampaignAnalytics setActiveTab={setActiveTab}  campaignAnalytics={campaignAnalytics} campaigns={campaigns} deleteCampaign={deleteCampaign} />;
 
       case 'users':
         return <UsersContent />;

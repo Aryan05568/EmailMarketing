@@ -196,21 +196,7 @@ const handleSchedule = async (campaignId) => {
   const today = new Date().toISOString().split('T')[0];
   // const today = new Date().toLocaleDateString('en-CA'); // 'YYYY-MM-DD' format
 
-  // const generateCalendarDays = () => {
-  //   const startOfMonth = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), 1);
-  //   const endOfMonth = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 0);
-  //   const startDate = new Date(startOfMonth);
-  //   startDate.setDate(startDate.getDate() - startOfMonth.getDay());
-    
-  //   const days = [];
-  //   for (let i = 0; i < 42; i++) {
-  //     const date = new Date(startDate);
-  //     date.setDate(startDate.getDate() + i);
-  //     days.push(date);
-  //   }
-    
-  //   return days;
-  // };
+ 
 
  const generateCalendarDays = () => {
   const year = calendarMonth.getFullYear();

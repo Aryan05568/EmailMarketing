@@ -161,13 +161,7 @@ console.log(users)
     }
   })
 
-  // const handleEditUser = (userData) => {
-  //   setUsers(users.map(user =>
-  //     user.id === editingUser.id ? { ...user, ...userData } : user
-  //   ));
-  //   setShowUserModal(false);
-  //   setEditingUser(null);
-  // };
+  
 const handleEditUser = async (userData) => {
     try {
         // Make API call to update user
@@ -422,12 +416,12 @@ const handleEditUser = async (userData) => {
         </div>
 
         <div className="flex items-center space-x-4">
-          <div className="relative">
+          {/* <div className="relative">
             <button className="p-3 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-all duration-200 relative">
               <Bell className="h-6 w-6" />
               <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center animate-pulse">3</span>
             </button>
-          </div>
+          </div> */}
           
           <div className="flex items-center space-x-3 bg-gray-50 rounded-xl px-4 py-2">
             <div className="h-10 w-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
@@ -455,7 +449,7 @@ const handleEditUser = async (userData) => {
     <div className="p-6 space-y-8">
      
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
           { 
             title: 'Total Subscribers', 
@@ -512,7 +506,7 @@ const handleEditUser = async (userData) => {
             </div>
           );
         })}
-      </div>
+      </div> */}
 
 
       {/* Recent Campaigns */}

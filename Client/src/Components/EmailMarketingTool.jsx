@@ -575,6 +575,60 @@ export default function EmailMarketingTool() {
 };
 
 
+const draftCampaign = async () => {
+    try {
+        // Create FormData object
+        const formData = new FormData();
+
+        // Since excelFilePath now contains Cloudinary URL, send it as a regular field
+        // Don't append the file, send the Cloudinary URL and public ID instead
+        formData.append('excelCloudinaryUrl', excelFilePath); // Cloudinary URL
+        formData.append('excelPublicId', excelPublicId); // Cloudinary public ID
+
+        // If using template file, send Cloudinary info; otherwise, send template content as text
+        if (templateFile && templateFilePath) {
+            formData.append('templateCloudinaryUrl', templateFilePath); // Cloudinary URL
+            formData.append('templatePublicId', templatePublicId); // Cloudinary public ID
+        }
+
+        // Append all other data as form fields
+        formData.append('templateContent', templateContent); // Send template content separately
+        formData.append('emailColumn', selectedEmailColumn);
+        formData.append('nameColumn', selectedNameColumn);
+        formData.append('subjectLine', subjectLine);
+        formData.append('smtpServer', userProfile?.id);
+        formData.append('smtpPort', smtpPort);
+        formData.append('emailUser', emailUser);
+        formData.append('emailPass', emailPass);
+        formData.append('senderName', senderName);
+        formData.append('campaign_name', campaignName);
+        formData.append('delayBetweenEmails', delayBetweenEmails);
+
+        // Handle variableMappings object - convert to JSON string
+        formData.append('variables', JSON.stringify(variableMappings));
+
+        const response = await fetch(`${BASEURL}/campaign/draft`, {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          
+            alert(result?.message || 'Campaign draft saved successfully');
+
+            
+        } else {
+            throw new Error(result.message || 'Failed to start sending');
+        }
+    } catch (error) {
+        console.error('Campaign start error:', error);
+        alert('Error starting email send: ' + error.message);
+    }
+};
+
+
 
     // Check sending status
     const checkSendingStatus = async (jobId) => {
@@ -1046,7 +1100,7 @@ export default function EmailMarketingTool() {
                                 className={`flex-1 py-2 border ${activeTemplateTab === 'paste' ? 'bg-blue-600 text-white border-blue-600' : 'bg-gray-100 border-gray-300'} rounded-r-md`}
                                 onClick={() => handleTemplateTabClick('paste')}
                             >
-                                Paste HTML
+                                Paste your Text
                             </button>
                         </div>
 
@@ -1126,7 +1180,7 @@ export default function EmailMarketingTool() {
 
                     <div className="flex justify-end">
                         <button
-                            className={`px-5 py-2 rounded-md ${nextToStep2Disabled ? 'bg-gray-300 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+                            className={`px-5 py-2 rounded-md cursor-pointer bg-blue-600 text-white hover:bg-blue-700'}`}
                             onClick={() => goToStep(2)}
                         >
                             Next: Configure
@@ -1310,7 +1364,7 @@ export default function EmailMarketingTool() {
                             Back
                         </button>
                         <button
-                            className={`px-5 py-2 rounded-md ${nextToStep3Disabled ? 'bg-gray-300 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+                            className={`px-5 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700'}`}
                             // disabled={nextToStep3Disabled}
                             onClick={() => goToStep(3)}
                         >
@@ -1461,11 +1515,18 @@ export default function EmailMarketingTool() {
 
                             <div className="flex justify-center">
                                 <button
-                                    className="px-8 py-3 rounded-md bg-green-600 text-white text-lg hover:bg-green-700 flex items-center gap-2"
+                                    className="px-8 py-3 mr-2 rounded-md bg-green-600 text-white text-lg hover:bg-green-700 flex items-center gap-2"
                                     onClick={startSending}
                                 >
                                     <Mail size={20} />
                                     Start Sending ({recipientCount} emails)
+                                </button>
+                                <button
+                                    className="px-8 py-3 rounded-md bg-green-600 text-white text-lg hover:bg-green-700 flex items-center gap-2"
+                                    onClick={draftCampaign}
+                                >
+                                    <Mail size={20} />
+                                    Save as Draft
                                 </button>
                             </div>
                         </div>
