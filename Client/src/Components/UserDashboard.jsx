@@ -20,20 +20,13 @@ const UserDashboard = () => {
   const [editingUser, setEditingUser] = useState(null);
   const [campaigns, setCampaigns] = useState([])
   const [error, setError] = useState(null);
+  const [userDetails, setUserDetails] = useState(null);
 
   const [users, setUsers] = useState([]);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-
-
-  const stats = {
-    totalSubscribers: 12450,
-    totalCampaigns: 25,
-    openRate: 71.2,
-    clickRate: 18.7
-  };
-
+ 
   const handleLogout = () => {
     dispatch(setAuthentication(false));
     dispatch(getProfile(null));
@@ -119,11 +112,29 @@ const UserDashboard = () => {
     }
   }
 
+  const fetchUserDetails = async () => {
+    try {
+      const response = await axios.get(`${BASEURL}/api/auth/user/${userProfile?.id}`, {
+        withCredentials: true,
+      });
+      const data = response.data;
+      setUserDetails(data?.data);
+      
+      
+
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   useEffect(()=>{
+    fetchUserDetails();
     fetchUsers()
     fetchCampaigns();
   
   },[])
+
+  console.log(userDetails)
 
   const deleteCampaign = async (id) => {
     try {
@@ -219,6 +230,10 @@ const handleEditUser = async (userData) => {
   } catch (err) {
     console.error('Delete error:', err.response.data.message);
   }
+};
+
+const isEmailLimitReached = () => {
+  return userDetails?.total_sent_emails >= userDetails?.email_limit;
 };
 
    const UserModal = () => (
@@ -351,31 +366,55 @@ const handleEditUser = async (userData) => {
       <nav className="mt-8 px-4">
         <div className="space-y-2">
           {[
-            { id: 'dashboard', label: 'Dashboard', icon: BarChart3, color: 'from-blue-500 to-cyan-500' },
-            { id: 'campaigns', label: 'Campaigns', icon: Mail, color: 'from-green-500 to-emerald-500' },
+            { id: 'dashboard', label: 'Dashboard', icon: BarChart3, color: 'from-blue-500 to-cyan-500',disabled: false },
+            { id: 'campaigns', label: 'Campaigns', icon: Mail, color: 'from-green-500 to-emerald-500' ,disabled: false},
             // { id: 'users', label: 'Team', icon: Users, color: 'from-purple-500 to-pink-500' },
-            { id: 'compose', label: 'Compose', icon: Send, color: 'from-orange-500 to-red-500' },
-            { id: 'analytics', label: 'Scheduler', icon: Calendar, color: 'from-indigo-500 to-purple-500' },
+            { id: 'compose', label: 'Compose', icon: Send, color: 'from-orange-500 to-red-500',disabled: isEmailLimitReached() },
+            { id: 'analytics', label: 'Scheduler', icon: Calendar, color: 'from-indigo-500 to-purple-500',disabled: isEmailLimitReached() },
             // { id: 'settings', label: 'Settings', icon: Settings, color: 'from-gray-500 to-slate-500' },
           ].map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
+            const isDisabled = item.disabled;
             return (
+              <>
               <button
                 key={item.id}
-                onClick={() => setActiveTab(item.id)}
+                // onClick={() => setActiveTab(item.id)}
+                onClick={() => !isDisabled && setActiveTab(item.id)}
                 className={`w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 group ${
-                  isActive
+                  isDisabled
+                    ? 'text-slate-500 bg-slate-800/50 cursor-not-allowed opacity-50'
+                    : isActive
                     ? 'bg-gradient-to-r ' + item.color + ' text-white shadow-lg transform scale-105'
                     : 'text-slate-300 hover:bg-slate-700/50 hover:text-white hover:scale-105'
                 }`}
               >
-                <Icon className={`mr-4 h-5 w-5 ${isActive ? 'animate-pulse' : 'group-hover:scale-110'} transition-transform`} />
+               <Icon className={`mr-4 h-5 w-5 ${
+                  isDisabled 
+                    ? '' 
+                    : isActive 
+                    ? 'animate-pulse' 
+                    : 'group-hover:scale-110'
+                } transition-transform`} />
                 {item.label}
-                {isActive && (
+                {isActive && !isDisabled && (
                   <div className="ml-auto w-2 h-2 bg-white rounded-full animate-pulse"></div>
                 )}
+                {isDisabled && (
+                  <div className="ml-auto">
+                    <div className="w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+                      <span className="text-xs text-white font-bold">!</span>
+                    </div>
+                  </div>
+                )}
               </button>
+              {isDisabled && (
+                <div className="absolute left-full ml-2 top-1/2 transform -translate-y-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                  Email limit reached. Cannot create campaigns.
+                </div>
+              )}
+              </>
             );
           })}
         </div>
@@ -447,68 +486,39 @@ const handleEditUser = async (userData) => {
 
  const DashboardContent = () => (
     <div className="p-6 space-y-8">
-     
 
-      {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[
-          { 
-            title: 'Total Subscribers', 
-            value: stats.totalSubscribers.toLocaleString(), 
-            icon: Users, 
-            color: 'from-blue-500 to-cyan-500',
-            bgColor: 'from-blue-50 to-cyan-50',
-            change: '+12.5%',
-            changeColor: 'text-green-600'
-          },
-          { 
-            title: 'Active Campaigns', 
-            value: stats.totalCampaigns, 
-            icon: Mail, 
-            color: 'from-emerald-500 to-green-500',
-            bgColor: 'from-emerald-50 to-green-50',
-            change: '+3.2%',
-            changeColor: 'text-green-600'
-          },
-          { 
-            title: 'Open Rate', 
-            value: `${stats.openRate}%`, 
-            icon: Eye, 
-            color: 'from-amber-500 to-orange-500',
-            bgColor: 'from-amber-50 to-orange-50',
-            change: '+2.1%',
-            changeColor: 'text-green-600'
-          },
-          { 
-            title: 'Click Rate', 
-            value: `${stats.clickRate}%`, 
-            icon: TrendingUp, 
-            color: 'from-purple-500 to-pink-500',
-            bgColor: 'from-purple-50 to-pink-50',
-            change: '-0.5%',
-            changeColor: 'text-red-600'
-          }
-        ].map((stat, index) => {
-          const Icon = stat.icon;
-          return (
-            <div key={index} className={`bg-gradient-to-br ${stat.bgColor} p-6 rounded-2xl shadow-lg border border-white/50 hover:shadow-xl transform hover:-translate-y-2 transition-all duration-300 group`}>
-              <div className="flex items-center justify-between mb-4">
-                <div className={`p-3 bg-gradient-to-br ${stat.color} rounded-xl shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                  <Icon className="h-6 w-6 text-white" />
+    {isEmailLimitReached() && (
+      <div className="bg-red-50 border border-red-200 rounded-2xl shadow-xl overflow-hidden">
+        <div className="bg-gradient-to-r from-red-500 to-red-600 p-6 border-b border-red-200/50">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-white flex items-center">
+                <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center mr-3">
+                  <span className="text-red-500 font-bold text-sm">!</span>
                 </div>
-                <div className={`text-sm font-semibold ${stat.changeColor} bg-white/80 px-2 py-1 rounded-full`}>
-                  {stat.change}
-                </div>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">{stat.title}</p>
-                <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
-              </div>
+                Email Limit Reached
+              </h3>
+              <p className="text-red-100 text-sm mt-1">
+                You have reached your email sending limit ({userDetails?.email_limit} emails). 
+                Contact your administrator to increase your limit.
+              </p>
             </div>
-          );
-        })}
-      </div> */}
-
-
+          </div>
+        </div>
+        <div className="p-4 bg-red-50">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-red-700">Emails sent: {userDetails?.email_sent_count}</span>
+            <span className="text-red-700">Limit: {userDetails?.email_limit}</span>
+          </div>
+          <div className="w-full bg-red-200 rounded-full h-2 mt-2">
+            <div 
+              className="bg-red-600 h-2 rounded-full transition-all duration-300" 
+              style={{ width: '100%' }}
+            ></div>
+          </div>
+        </div>
+      </div>
+    )}
       {/* Recent Campaigns */}
       <div className="bg-white rounded-2xl shadow-xl border border-gray-200/50 overflow-hidden">
         <div className="bg-gradient-to-r from-gray-50 to-white p-6 border-b border-gray-200/50">
@@ -516,12 +526,17 @@ const handleEditUser = async (userData) => {
              <h3 className="text-xl font-bold text-gray-900">Recent Campaigns</h3>
               <p className="text-sm text-gray-500 mt-1">Monitor your email campaign performance</p>
             <button
-              onClick={() => setActiveTab('compose')}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl text-sm font-semibold hover:from-blue-700 hover:to-purple-700 flex items-center shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              New Campaign
-            </button>
+            onClick={() => !isEmailLimitReached() && setActiveTab('compose')}
+            disabled={isEmailLimitReached()}
+            className={`px-6 py-3 rounded-xl text-sm font-semibold flex items-center shadow-lg transition-all duration-200 ${
+              isEmailLimitReached()
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-50'
+                : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 hover:shadow-xl transform hover:scale-105'
+            }`}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            {isEmailLimitReached() ? 'Limit Reached' : 'New Campaign'}
+          </button>
           </div>
         </div>
         <div className="overflow-x-auto">
@@ -734,6 +749,12 @@ const handleEditUser = async (userData) => {
 
   // Render content based on active tab
   const renderContent = () => {
+
+    if (isEmailLimitReached() && (activeTab === 'compose' || activeTab === 'analytics')) {
+    setActiveTab('dashboard');
+    return <DashboardContent />;
+  }
+
     switch (activeTab) {
       case 'dashboard':
         return <DashboardContent />;

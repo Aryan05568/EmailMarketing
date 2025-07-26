@@ -43,7 +43,7 @@ const getUsers = async (req, res) => {
     try {
         const { data: users, error } = await supabase
             .from('users')
-            .select('name, email,password, created_at,id')
+            .select('name, email,password, created_at,id,total_sent_emails,email_limit')
             .order('created_at', { ascending: false });
 
         if (error) {
@@ -113,9 +113,99 @@ const deleteUser = async (req, res) => {
     }
 };
 
+const updateUserSentCount = async (req, res) => {
+    const { id } = req.params; // Get user ID from URL parameters
+    const { sentCount } = req.body;
 
+    // Validate user ID
+    if (!id) {
+        return res.status(400).json({ message: 'User ID is required' });
+    }
+
+    // Validate sent count
+    if (typeof sentCount !== 'number' || sentCount < 0) {
+        return res.status(400).json({ message: 'Valid sent count is required' });
+    }
+
+    try {
+        // Check if user exists and get current sent count
+        const { data: existingUser, error: fetchError } = await supabase
+            .from('users')
+            .select('id, name, total_sent_emails')
+            .eq('id', id)
+            .single();
+
+        if (fetchError || !existingUser) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Calculate new total (add to existing count)
+        const currentTotal = existingUser.total_sent_emails || 0;
+        const newTotal = currentTotal + sentCount;
+
+        // Update the user's total sent emails count
+        const { data: updatedUser, error: updateError } = await supabase
+            .from('users')
+            .update({ 
+                total_sent_emails: newTotal,
+            
+            })
+            .eq('id', id)
+            .select();
+
+        if (updateError) {
+            return res.status(500).json({ 
+                message: 'Error updating sent count', 
+                error: updateError.message 
+            });
+        }
+
+        if (!updatedUser || updatedUser.length === 0) {
+            return res.status(404).json({ message: 'User not found or update failed' });
+        }
+
+        console.log(`Updated sent count for user ${existingUser.name}: +${sentCount} (Total: ${newTotal})`);
+        
+        res.status(200).json({ 
+            message: 'Sent count updated successfully', 
+            user: updatedUser[0],
+            previousTotal: currentTotal,
+            newTotal: newTotal,
+            campaignSent: sentCount
+        });
+
+    } catch (err) {
+        console.error('Sent count update error:', err);
+        res.status(500).json({ 
+            message: 'Internal server error', 
+            error: err.message 
+        });
+    }
+};
+
+
+const userDetails = async(req, res) => {
+    const {id} = req.params;
+
+    try {
+        const { data: user, error } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+
+        return res.status(200).json({ 
+           data: user,
+           message: 'User details retrieved successfully'
+        });
+    } catch (err) {
+        // console.error('User login error:', err);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+};
 
 
 module.exports = {
-    userLogin, getUsers, deleteUser
+    userLogin, getUsers, deleteUser, updateUserSentCount, userDetails
 };

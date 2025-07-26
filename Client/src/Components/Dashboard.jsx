@@ -249,7 +249,8 @@ const handleEditUser = async (userData) => {
               name: formData.get('name'),
               email: formData.get('email'),
               password: formData.get('password'),
-              role: formData.get('role')
+              role: formData.get('role'),
+              emailLimit: formData.get('emailLimit')
             };
             editingUser ? handleEditUser(userData) : handleCreateUser(userData);
           }}>
@@ -297,6 +298,17 @@ const handleEditUser = async (userData) => {
                     defaultValue=""
                     className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
                     placeholder={editingUser ? "Leave blank to keep current" : "Enter password"}
+                  />
+                </div>
+                <div className="group">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Email Limit</label>
+                  <input
+                    type="number"
+                    name="emailLimit"
+                    required={!editingUser}
+                    defaultValue=""
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
+                    // placeholder={editingUser ? "Leave blank to keep current" : "Enter password"}
                   />
                 </div>
 
@@ -1045,9 +1057,9 @@ useEffect(() => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {[
           { title: 'Total Users', value: users.length, icon: Users, color: 'from-blue-500 to-cyan-500', bgColor: 'from-blue-50 to-cyan-50' },
-          { title: 'Active Users', value: users.filter(u => u.status === 'Active').length, icon: Activity, color: 'from-green-500 to-emerald-500', bgColor: 'from-green-50 to-emerald-50' },
-          { title: 'Admins', value: users.filter(u => u.role === 'Admin').length, icon: Settings, color: 'from-red-500 to-pink-500', bgColor: 'from-red-50 to-pink-50' },
-          { title: 'Managers', value: users.filter(u => u.role === 'Manager').length, icon: Target, color: 'from-purple-500 to-indigo-500', bgColor: 'from-purple-50 to-indigo-50' }
+          // { title: 'Active Users', value: users.filter(u => u.status === 'Active').length, icon: Activity, color: 'from-green-500 to-emerald-500', bgColor: 'from-green-50 to-emerald-50' },
+          // { title: 'Admins', value: users.filter(u => u.role === 'Admin').length, icon: Settings, color: 'from-red-500 to-pink-500', bgColor: 'from-red-50 to-pink-50' },
+          // { title: 'Managers', value: users.filter(u => u.role === 'Manager').length, icon: Target, color: 'from-purple-500 to-indigo-500', bgColor: 'from-purple-50 to-indigo-50' }
         ].map((stat, index) => {
           const Icon = stat.icon;
           return (
@@ -1095,7 +1107,7 @@ useEffect(() => {
           <table className="min-w-full ">
           <thead className="bg-gray-50/50">
               <tr>
-                {['User','Password', 'Role',  'Created', 'Actions'].map((header) => (
+                {['User','Password','Total Sent', 'Email Limit','Role',  'Created', 'Actions'].map((header) => (
                   <th key={header} className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     {header}
                   </th>
@@ -1122,6 +1134,22 @@ useEffect(() => {
                           'bg-gray-100 text-gray-800'
                       }`}>
                      {user.password}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${user.role === 'Admin' ? 'bg-red-100 text-red-800' :
+                        user.role === 'Manager' ? 'bg-blue-100 text-blue-800' :
+                          'bg-gray-100 text-gray-800'
+                      }`}>
+                      {user?.total_sent_emails}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${user.role === 'Admin' ? 'bg-red-100 text-red-800' :
+                        user.role === 'Manager' ? 'bg-blue-100 text-blue-800' :
+                          'bg-gray-100 text-gray-800'
+                      }`}>
+                      {user?.email_limit}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">

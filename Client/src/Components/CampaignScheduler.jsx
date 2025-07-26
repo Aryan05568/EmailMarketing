@@ -146,33 +146,7 @@ const handleSchedule = async (campaignId) => {
     setLoading(false);
   };
 
-  // const handleUnschedule = async (campaignId) => {
-  //   setLoading(true);
-    
-  //   try {
-  //     await new Promise(resolve => setTimeout(resolve, 1000));
-      
-  //     setCampaigns(prevCampaigns => 
-  //       prevCampaigns.map(campaign => 
-  //         campaign.id === campaignId 
-  //           ? { ...campaign, is_scheduled: false, scheduled_datetime: null, status: 'draft' }
-  //           : campaign
-  //       )
-  //     );
-      
-  //     if (showCalendarModal) {
-  //       setShowCalendarModal(false);
-  //       setSelectedDate('');
-  //       setSelectedTime('');
-  //       setSelectedCampaign(null);
-  //     }
-      
-  //     alert('Campaign unscheduled successfully!');
-  //   } catch (error) {
-  //     alert('Failed to unschedule campaign');
-  //   }
-  //   setLoading(false);
-  // };
+ 
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -384,21 +358,7 @@ const formatScheduledTime = (datetime) => {
 };
 
 
-  // const formatScheduledTime = (datetime) => {
-  //   console.log(datetime)
-  //   const date = new Date(datetime);
-  //   const dateStr = date.toLocaleDateString('en-US', {
-  //     month: '2-digit',
-  //     day: '2-digit',
-  //     year: 'numeric'
-  //   });
-  //   const timeStr = date.toLocaleTimeString('en-US', {
-  //     hour: '2-digit',
-  //     minute: '2-digit',
-  //     hour12: true
-  //   });
-  //   return { date: dateStr, time: timeStr };
-  // };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">

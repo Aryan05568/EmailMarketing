@@ -90,7 +90,7 @@ const createUser = async(req, res) => {
 
 const updateUser = async (req, res) => {
     const { id } = req.params; // Get user ID from URL parameters
-    const { email, password, name } = req.body;
+    const { email, password, name ,emailLimit} = req.body;
 
     // Validate user ID
     if (!id) {
@@ -132,6 +132,7 @@ const updateUser = async (req, res) => {
         
         if (name) updateData.name = name;
         if (email) updateData.email = email;
+        if (emailLimit) updateData.email_limit = emailLimit;
         
         // Hash password if provided
         if (password) {

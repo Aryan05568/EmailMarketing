@@ -1,7 +1,7 @@
 const express = require('express');
 const supabase = require('../config/supabase_client');
 const { adminLogin, createUser, updateUser } = require('../controller/admin');
-const { userLogin, getUsers, deleteUser } = require('../controller/user');
+const { userLogin, getUsers, deleteUser, updateUserSentCount, userDetails } = require('../controller/user');
 const { authenticate, authorizeAdmin } = require('../middleware/middleware')
 
 const router = express.Router();
@@ -33,7 +33,12 @@ router.post("/create_user",  createUser)
 
 router.get('/users', getUsers);
 
+router.get('/user/:id',userDetails);
+
 router.put('/update_user/:id', updateUser);
+
+// In your routes file
+router.patch('/users/:id/update-sent-count', updateUserSentCount);
 
 router.delete('/users/:id', deleteUser);
 module.exports = router;

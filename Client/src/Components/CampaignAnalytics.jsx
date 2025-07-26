@@ -104,7 +104,7 @@ const CampaignAnalytics = ({campaigns, campaignAnalytics,setActiveTab}) => {
                     </tr>
                   ) : (
                     campaigns.map((campaign) => {
-                      const analytics = campaignAnalytics[campaign.campaign_name] || {};
+                      // const analytics = campaignAnalytics[campaign?.campaign_name] || {};
                       return (
                         <tr key={campaign.id} className="hover:bg-gray-50/50 transition-colors duration-200 group">
                           <td className="px-6 py-5">
@@ -127,22 +127,22 @@ const CampaignAnalytics = ({campaigns, campaignAnalytics,setActiveTab}) => {
                             </span>
                           </td>
                           <td className="px-6 py-5 text-sm font-medium text-gray-900">
-                            {analytics.sent?.toLocaleString() || '-'}
+                            {/* {analytics.sent?.toLocaleString() || '-'} */}
                           </td>
                           <td className="px-6 py-5 text-sm font-medium text-gray-900">
-                            {analytics.opened?.toLocaleString() || '-'}
+                            {/* {analytics.opened?.toLocaleString() || '-'} */}
                           </td>
                           <td className="px-6 py-5 text-sm font-medium text-gray-900">
-                            {analytics.clicked?.toLocaleString() || '-'}
+                            {/* {analytics.clicked?.toLocaleString() || '-'} */}
                           </td>
                           <td className="px-6 py-5">
-                            <span className={`text-sm font-medium ${getPerformanceIndicator(analytics.openRate || 0, 'open')}`}>
-                              {analytics.openRate ? `${analytics.openRate}%` : '-'}
+                            <span className={`text-sm font-medium`}>
+                              {/* {analytics.openRate ? `${analytics.openRate}%` : '-'} */}
                             </span>
                           </td>
                           <td className="px-6 py-5">
-                            <span className={`text-sm font-medium ${getPerformanceIndicator(analytics.clickRate || 0, 'click')}`}>
-                              {analytics.clickRate ? `${analytics.clickRate}%` : '-'}
+                            <span className={`text-sm font-medium `}>
+                              {/* {analytics.clickRate ? `${analytics.clickRate}%` : '-'} */}
                             </span>
                           </td>
                           <td className="px-6 py-5 text-sm text-gray-500">

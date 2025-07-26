@@ -258,6 +258,9 @@ async function sendEmailsJob({
                     const jobData = activeSendingJobs.get(jobId);
                     if (jobData) jobData.sentEmails = success;
 
+                    console.log(jobData)
+                     
+                    // return jobData
 
                     
 
@@ -304,6 +307,8 @@ async function sendEmailsJob({
     if (transporter && typeof transporter.close === 'function') {
         transporter.close();
     }
+
+    // return finalJobData
 }
 
 // Optional: Store minimal campaign info locally (just campaign metadata, not tracking data)
