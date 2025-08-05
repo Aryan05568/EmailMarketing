@@ -543,7 +543,7 @@ const isEmailLimitReached = () => {
           <table className="min-w-full">
             <thead className="bg-gray-50/50">
               <tr>
-                {['Campaign', 'Status', 'Sent', 'Opened', 'Clicked', 'Date', 'Actions'].map((header) => (
+                {['Campaign', 'Status', 'Sent', 'Bounced', 'Date', 'Actions'].map((header) => (
                   <th key={header} className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     {header}
                   </th>
@@ -573,9 +573,9 @@ const isEmailLimitReached = () => {
                       {campaign.status}
                     </span>
                   </td>
-                  <td className="px-6 py-5 text-sm font-medium text-gray-900">25</td>
-                  <td className="px-6 py-5 text-sm font-medium text-gray-900">478</td>
-                  <td className="px-6 py-5 text-sm font-medium text-gray-900">478</td>
+                  <td className="px-6 py-5 text-sm font-medium text-gray-900">{campaign?.emails_sent}</td>
+                  <td className="px-6 py-5 text-sm font-medium text-gray-900">{campaign?.emails_failed}</td>
+                  {/* <td className="px-6 py-5 text-sm font-medium text-gray-900">478</td> */}
 
                   <td className="px-6 py-5 text-sm text-gray-500">{formatDate(campaign.created_at)}</td>
                   <td className="px-6 py-5 text-sm font-medium text-gray-900">

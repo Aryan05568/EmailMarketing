@@ -563,6 +563,9 @@ app.post('/campaign', uploadFormData.none(), async (req, res) => {
                 template: finalTemplateContent,
                 campaign_name: campaign_name,
                 status: 'pending',
+                total_recipients: recipients.length, // Add total count
+                emails_sent: 0, // Initialize sent count
+                emails_failed: 0, // Initialize failed count
                 created_at: new Date().toISOString()
             }])
             .select()

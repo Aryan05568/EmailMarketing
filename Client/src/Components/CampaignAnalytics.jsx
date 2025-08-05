@@ -73,20 +73,20 @@ const CampaignAnalytics = ({campaigns, campaignAnalytics,setActiveTab}) => {
                   <h3 className="text-xl font-bold text-gray-900">Recent Campaigns</h3>
                   <p className="text-sm text-gray-500 mt-1">Monitor your email campaign performance</p>
                 </div>
-                <button
+                {/*<button
                   onClick={() => setActiveTab('compose')}
                   className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl text-sm font-semibold hover:from-blue-700 hover:to-purple-700 flex items-center shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   New Campaign
-                </button>
+                </button>*/}
               </div>
             </div>
             <div className="overflow-x-auto">
               <table className="min-w-full">
                 <thead className="bg-gray-50/50">
                   <tr>
-                    {['Campaign', 'Status', 'Sent', 'Opened', 'Clicked', 'Open Rate', 'Click Rate', 'Date', 'Actions'].map((header) => (
+                    {['Campaign', 'Status','Total Recipients', 'Sent', 'Bounced', ,  'Date', 'Actions'].map((header) => (
                       <th key={header} className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                         {header}
                       </th>
@@ -128,23 +128,26 @@ const CampaignAnalytics = ({campaigns, campaignAnalytics,setActiveTab}) => {
                           </td>
                           <td className="px-6 py-5 text-sm font-medium text-gray-900">
                             {/* {analytics.sent?.toLocaleString() || '-'} */}
+                            {campaign.total_recipients?.toLocaleString() || '-'}
                           </td>
                           <td className="px-6 py-5 text-sm font-medium text-gray-900">
                             {/* {analytics.opened?.toLocaleString() || '-'} */}
+                            {campaign.emails_sent?.toLocaleString() || '-'}
                           </td>
                           <td className="px-6 py-5 text-sm font-medium text-gray-900">
                             {/* {analytics.clicked?.toLocaleString() || '-'} */}
+                            {campaign.emails_failed?.toLocaleString() || '-'}
                           </td>
-                          <td className="px-6 py-5">
+                          {/* <td className="px-6 py-5">
                             <span className={`text-sm font-medium`}>
-                              {/* {analytics.openRate ? `${analytics.openRate}%` : '-'} */}
+                              
                             </span>
                           </td>
                           <td className="px-6 py-5">
                             <span className={`text-sm font-medium `}>
-                              {/* {analytics.clickRate ? `${analytics.clickRate}%` : '-'} */}
+                              
                             </span>
-                          </td>
+                          </td> */}
                           <td className="px-6 py-5 text-sm text-gray-500">
                             {formatDate(campaign.created_at)}
                           </td>

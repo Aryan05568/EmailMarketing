@@ -845,7 +845,7 @@ useEffect(() => {
           <table className="min-w-full">
             <thead className="bg-gray-50/50">
               <tr>
-                {['Campaign', 'Status', 'Sent', 'Opened', 'Clicked', 'Open Rate', 'Click Rate', 'Date', 'Actions'].map((header) => (
+                {['Campaign', 'Status', 'Sent', 'Bounced',   'Date', 'Actions'].map((header) => (
                   <th key={header} className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     {header}
                   </th>
@@ -886,12 +886,14 @@ useEffect(() => {
                         </span>
                       </td>
                       <td className="px-6 py-5 text-sm font-medium text-gray-900">
-                        {analytics.sent?.toLocaleString() || '-'}
+                        {/* {analytics.sent?.toLocaleString() || '-'}
+                         */}
+                         {campaign.emails_sent?.toLocaleString() || '-'}
                       </td>
                       <td className="px-6 py-5 text-sm font-medium text-gray-900">
-                        {analytics.opened?.toLocaleString() || '-'}
+                        {campaign?.failed_emails?.toLocaleString() || '-'}
                       </td>
-                      <td className="px-6 py-5 text-sm font-medium text-gray-900">
+                      {/* <td className="px-6 py-5 text-sm font-medium text-gray-900">
                         {analytics.clicked?.toLocaleString() || '-'}
                       </td>
                       <td className="px-6 py-5">
@@ -903,7 +905,7 @@ useEffect(() => {
                         <span className={`text-sm font-medium ${getPerformanceIndicator(analytics.clickRate || 0, 'click')}`}>
                           {analytics.clickRate ? `${analytics.clickRate}%` : '-'}
                         </span>
-                      </td>
+                      </td> */}
                       <td className="px-6 py-5 text-sm text-gray-500">
                         {formatDate(campaign.created_at)}
                       </td>

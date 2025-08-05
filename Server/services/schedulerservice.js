@@ -364,12 +364,28 @@ class CampaignScheduler {
             } = campaign;
 
             console.log(`Starting execution of campaign: ${campaign_name}`);
+// Get current counts before execution (for accumulation)
+        const { data: currentCampaign, error: fetchError } = await supabase
+            .from('campaigns')
+            .select('emails_sent, emails_failed, total_recipients, execution_count')
+            .eq('id', id)
+            .single();
+            if (fetchError) {
+            console.error('Error fetching current campaign data:', fetchError);
+            throw new Error(`Failed to fetch campaign data: ${fetchError.message}`);
+        }
+
+        const currentEmailsSent = currentCampaign?.emails_sent || 0;
+        const currentEmailsFailed = currentCampaign?.emails_failed || 0;
+        const currentExecutionCount = currentCampaign?.execution_count || 0;
 
             await supabase
                 .from('campaigns')
                 .update({
                     status: 'sending',
-                    last_executed: new Date().toISOString()
+                    last_executed: new Date().toISOString(),
+                    emails_sent: 0, // Reset for new execution
+                emails_failed: 0 
                 })
                 .eq('id', id);
 
@@ -390,11 +406,23 @@ class CampaignScheduler {
                 await supabase
                     .from('campaigns')
                     .update({
-                        status: campaign.schedule_pattern ? 'scheduled' : 'completed'
+                        status: campaign.schedule_pattern ? 'scheduled' : 'completed',
+                         total_recipients: Math.max(currentCampaign?.total_recipients || 0, 0)
+                    
                     })
                     .eq('id', id);
                 return;
             }
+
+            const newTotalRecipients = (currentCampaign?.total_recipients || 0) + recipients.length;
+
+            // Update total recipients count
+        await supabase
+            .from('campaigns')
+            .update({
+                total_recipients: newTotalRecipients
+            })
+            .eq('id', id);
 
             const transporter = createTransporter({
                 smtpServer: process.env.SMTP_HOST,
@@ -433,19 +461,34 @@ class CampaignScheduler {
                 delayBetweenEmails: parseInt(delay_between_emails),
                 activeSendingJobs: this.activeSendingJobs,
                 uploadsPath: './uploads/images/',
+                campaignId: id
             }).then(async () => {
+                // Get final counts from the job data
+           // Get final counts from the job data (current execution only)
+            const finalJobData = this.activeSendingJobs.get(jobId);
+            const currentExecutionSent = finalJobData ? finalJobData.sentEmails : 0;
+            const currentExecutionFailed = finalJobData ? finalJobData.failedEmails : 0;
+
+            // Calculate accumulated totals
+            const totalSentEmails = currentEmailsSent + currentExecutionSent;
+            const totalFailedEmails = currentEmailsFailed + currentExecutionFailed;
+
                 const newStatus = campaign.schedule_pattern ? 'scheduled' : 'completed';
                 await supabase
                     .from('campaigns')
                     .update({
                         status: newStatus,
-                        execution_count: (campaign.execution_count || 0) + 1
+                        execution_count: (campaign.execution_count || 0) + 1,
+                        completed_at: new Date().toISOString(),
+                    // Final counts should already be updated by sendEmailsJob, but ensure they're correct
+                    emails_sent: totalSentEmails,
+                    emails_failed: totalFailedEmails
                     })
                     .eq('id', id);
 
 
                 if (campaign.smtp_server) {
-                    const sentCount = recipients.length;
+                    // const sentCount = recipients.length;
                     const { data: existingUser, error: fetchError } = await supabase
                         .from('users')
                         .select('total_sent_emails')
@@ -453,29 +496,66 @@ class CampaignScheduler {
                         .single();
 
                     if (!fetchError && existingUser) {
-                        const newTotal = (existingUser.total_sent_emails || 0) + sentCount;
+                        const newTotal = (existingUser.total_sent_emails || 0) + currentExecutionSent;
 
                         await supabase
                             .from('users')
                             .update({ total_sent_emails: newTotal })
                             .eq('id', campaign.smtp_server);
 
-                        console.log(`Updated sent count for user ${campaign.smtp_server}: +${sentCount}`);
+                        console.log(`Updated sent count for user ${campaign.smtp_server}: +${currentExecutionSent}`);
                     } else {
                         console.warn('User not found or error fetching user data while updating sent count.');
                     }
                 }
 
                 console.log(`Campaign ${campaign_name} completed successfully`);
+                // Clean up job data
+            this.activeSendingJobs.delete(jobId);
             }).catch(async (error) => {
                 console.error(`Error in campaign ${campaign_name}:`, error);
-                await supabase
+                // Get current counts even if there was an error
+            const currentJobData = this.activeSendingJobs.get(jobId);
+            const sentCount = currentJobData ? currentJobData.sentEmails : 0;
+            const failedCount = currentJobData ? currentJobData.failedEmails : 0;
+            // Calculate accumulated totals even on error
+            const totalSentEmails = currentEmailsSent + currentExecutionSent;
+            const totalFailedEmails = currentEmailsFailed + currentExecutionFailed;    
+            
+            await supabase
                     .from('campaigns')
                     .update({
                         status: campaign.schedule_pattern ? 'scheduled' : 'failed',
-                        last_error: error.message
+                        last_error: error.message,
+                        emails_sent: totalSentEmails, // Use accumulated counts
+                    emails_failed: totalFailedEmails,
                     })
                     .eq('id', id);
+
+                    if (campaign.smtp_server &&  currentExecutionSent > 0) {
+                try {
+                    const { data: existingUser, error: fetchError } = await supabase
+                        .from('users')
+                        .select('total_sent_emails')
+                        .eq('id', campaign.smtp_server)
+                        .single();
+
+                    if (!fetchError && existingUser) {
+                        const newTotal = (existingUser.total_sent_emails || 0) + currentExecutionSent;
+
+                        await supabase
+                            .from('users')
+                            .update({ total_sent_emails: newTotal })
+                            .eq('id', campaign.smtp_server);
+
+                        console.log(`Updated sent count for user ${campaign.smtp_server} despite error: +${sentCount}`);
+                    }
+                } catch (userUpdateError) {
+                    console.error('Error updating user sent count after campaign failure:', userUpdateError);
+                }
+            }
+             // Clean up job data
+            this.activeSendingJobs.delete(jobId);
             });
 
         } catch (error) {

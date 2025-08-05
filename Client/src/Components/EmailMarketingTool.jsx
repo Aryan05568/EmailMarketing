@@ -239,31 +239,77 @@ export default function EmailMarketingTool() {
     };
 
     // Update insertImageIntoTemplate to use base64 for emails
+    // const insertImageIntoTemplate = (imageUrl, imageName, base64Data, cidName) => {
+    //     console.log("Inserting image with CID:", cidName);
+
+    //     // Use CID reference for email compatibility
+    //     // The actual filename will be used as CID by the backend
+    //     // const imageTag = `<img src="cid:${cidName}" alt="${imageName}" style="max-width: 100%; height: auto;" />`;
+    //     const imageTag = `<img src="${imageUrl}" alt="${imageName}" style="max-width: 100%; height: auto;" />`;
+
+    //     if (activeTemplateTab === 'paste') {
+    //         const textarea = document.getElementById('template-content');
+    //         const start = textarea.selectionStart;
+    //         const end = textarea.selectionEnd;
+    //         const text = templateContent;
+    //         const before = text.substring(0, start);
+    //         const after = text.substring(end, text.length);
+
+    //         setTemplateContent(before + imageTag + after);
+
+    //         // Set cursor position after inserted image
+    //         setTimeout(() => {
+    //             textarea.selectionStart = textarea.selectionEnd = start + imageTag.length;
+    //             textarea.focus();
+    //         }, 0);
+    //     }
+    // };
+
     const insertImageIntoTemplate = (imageUrl, imageName, base64Data, cidName) => {
-        console.log("Inserting image with CID:", cidName);
+    console.log("Inserting image with CID:", cidName);
+    
+    // Professional email-compatible image styling
+    const imageTag = `
+<table cellpadding="0" cellspacing="0" border="0" style="margin: 20px 0;">
+    <tr>
+        <td align="center">
+            <img src="${imageUrl}"
+                 alt="${imageName}" 
+                 style="
+                     max-width: 500px; 
+                     max-height:300px
+                     width: 100%; 
+                     height: auto; 
+                     display: block; 
+                     border: none; 
+                     outline: none; 
+                     text-decoration: none; 
+                     -ms-interpolation-mode: bicubic;
+                     border-radius: 8px;
+                     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                 " 
+                 width="600" />
+        </td>
+    </tr>
+</table>`.trim();
 
-        // Use CID reference for email compatibility
-        // The actual filename will be used as CID by the backend
-        // const imageTag = `<img src="cid:${cidName}" alt="${imageName}" style="max-width: 100%; height: auto;" />`;
-        const imageTag = `<img src="${imageUrl}" alt="${imageName}" style="max-width: 100%; height: auto;" />`;
+    if (activeTemplateTab === 'paste') {
+        const textarea = document.getElementById('template-content');
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const text = templateContent;
+        const before = text.substring(0, start);
+        const after = text.substring(end, text.length);
 
-        if (activeTemplateTab === 'paste') {
-            const textarea = document.getElementById('template-content');
-            const start = textarea.selectionStart;
-            const end = textarea.selectionEnd;
-            const text = templateContent;
-            const before = text.substring(0, start);
-            const after = text.substring(end, text.length);
+        setTemplateContent(before + imageTag + after);
 
-            setTemplateContent(before + imageTag + after);
-
-            // Set cursor position after inserted image
-            setTimeout(() => {
-                textarea.selectionStart = textarea.selectionEnd = start + imageTag.length;
-                textarea.focus();
-            }, 0);
-        }
-    };
+        // Set cursor position after inserted image
+        setTimeout(() => {
+            textarea.selectionStart = textarea.selectionEnd = start + imageTag.length;
+            textarea.focus();
+        }, 0);
+    }
+};
 
 
     // Handle tab switching

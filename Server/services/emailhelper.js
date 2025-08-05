@@ -188,6 +188,9 @@ async function sendEmailsJob({
                 currentJobData.sentEmails = success;
                 currentJobData.failedEmails = failed;
                 currentJobData.stopped = true;
+
+                // Update campaign in database when stopped
+                await updateCampaignCounts(campaignId, success, failed);
             }
             break;
         }
@@ -257,7 +260,7 @@ async function sendEmailsJob({
                     success++;
                     const jobData = activeSendingJobs.get(jobId);
                     if (jobData) jobData.sentEmails = success;
-
+ await updateCampaignCounts(campaignId, success, failed);
                     console.log(jobData)
                      
                     // return jobData
@@ -291,6 +294,9 @@ async function sendEmailsJob({
             console.error(`Failed to send email to ${email}:`, err.message);
             const jobData = activeSendingJobs.get(jobId);
             if (jobData) jobData.failedEmails = failed;
+
+            // Update campaign count in database after every failed email
+            await updateCampaignCounts(campaignId, success, failed);
         }
 
         if (i < recipients.length - 1) {
@@ -303,12 +309,42 @@ async function sendEmailsJob({
         finalJobData.completed = true;
         finalJobData.endTime = new Date();
     }
+     await updateCampaignCounts(campaignId, success, failed, true);
     
     if (transporter && typeof transporter.close === 'function') {
         transporter.close();
     }
 
     // return finalJobData
+}
+
+async function updateCampaignCounts(campaignId, sentCount, failedCount, isCompleted = false) {
+    try {
+        const updateData = {
+            emails_sent: sentCount,
+            emails_failed: failedCount,
+            updated_at: new Date().toISOString()
+        };
+
+        // If completed, also update the status
+        if (isCompleted) {
+            updateData.status = 'completed';
+            updateData.completed_at = new Date().toISOString();
+        }
+
+        const { error } = await supabase
+            .from('campaigns')
+            .update(updateData)
+            .eq('id', campaignId);
+
+        if (error) {
+            console.error('Error updating campaign counts:', error);
+        } else {
+            console.log(`Campaign ${campaignId} updated - Sent: ${sentCount}, Failed: ${failedCount}`);
+        }
+    } catch (err) {
+        console.error('Error in updateCampaignCounts:', err);
+    }
 }
 
 // Optional: Store minimal campaign info locally (just campaign metadata, not tracking data)
