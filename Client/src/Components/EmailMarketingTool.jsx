@@ -3,6 +3,8 @@ import { useState, useRef, useEffect } from 'react';
 import { X, Upload, Mail, Settings, Send, FileText, CheckCircle, AlertCircle, Clock, Plus, Eye, Image as ImageIcon } from 'lucide-react';
 import { BASEURL } from '../utility/config';
 import { useSelector } from 'react-redux';
+import { marked } from 'marked';
+
 
 export default function EmailMarketingTool() {
     const { userProfile } = useSelector((state) => state.user);
@@ -133,6 +135,24 @@ export default function EmailMarketingTool() {
         e.target.value = '';
     };
 
+    const isHtmlContent = (content) => {
+        const htmlRegex = /<\/?[a-z][\s\S]*>/i;
+        return htmlRegex.test(content);
+    };
+
+    const convertTextToHtml = (text) => {
+        // Simply replace line breaks with <br> tags to preserve original formatting
+        return text
+            .replace(/\r\n/g, '<br>')     // Windows line endings
+            .replace(/\n/g, '<br>')       // Unix line endings  
+            .replace(/\r/g, '<br>');      // Mac line endings
+    };
+
+
+
+    // Function to convert plain text to HTML with proper formatting
+    // Add this helper function to convert plain text to HTML
+
 
 
     const removeImage = (imageId) => {
@@ -237,79 +257,97 @@ export default function EmailMarketingTool() {
             });
         }
     };
+    const insertImageIntoTemplate = (imageUrl, imageName, base64Data, cidName, selectedSize = '') => {
+        const [width, height] = selectedSize?.split('x') || [];
 
-    // Update insertImageIntoTemplate to use base64 for emails
-    // const insertImageIntoTemplate = (imageUrl, imageName, base64Data, cidName) => {
-    //     console.log("Inserting image with CID:", cidName);
+        const imgWidth = width ? `width: ${width}px;` : 'max-width: 500px;';
+        const imgHeight = height ? `height: ${height}px;` : 'max-height: 300px;';
 
-    //     // Use CID reference for email compatibility
-    //     // The actual filename will be used as CID by the backend
-    //     // const imageTag = `<img src="cid:${cidName}" alt="${imageName}" style="max-width: 100%; height: auto;" />`;
-    //     const imageTag = `<img src="${imageUrl}" alt="${imageName}" style="max-width: 100%; height: auto;" />`;
-
-    //     if (activeTemplateTab === 'paste') {
-    //         const textarea = document.getElementById('template-content');
-    //         const start = textarea.selectionStart;
-    //         const end = textarea.selectionEnd;
-    //         const text = templateContent;
-    //         const before = text.substring(0, start);
-    //         const after = text.substring(end, text.length);
-
-    //         setTemplateContent(before + imageTag + after);
-
-    //         // Set cursor position after inserted image
-    //         setTimeout(() => {
-    //             textarea.selectionStart = textarea.selectionEnd = start + imageTag.length;
-    //             textarea.focus();
-    //         }, 0);
-    //     }
-    // };
-
-    const insertImageIntoTemplate = (imageUrl, imageName, base64Data, cidName) => {
-    console.log("Inserting image with CID:", cidName);
-    
-    // Professional email-compatible image styling
-    const imageTag = `
+        const imageTag = `
 <table cellpadding="0" cellspacing="0" border="0" style="margin: 20px 0;">
-    <tr>
-        <td align="center">
-            <img src="${imageUrl}"
-                 alt="${imageName}" 
-                 style="
-                     max-width: 500px; 
-                     max-height:300px
-                     width: 100%; 
-                     height: auto; 
-                     display: block; 
-                     border: none; 
-                     outline: none; 
-                     text-decoration: none; 
-                     -ms-interpolation-mode: bicubic;
-                     border-radius: 8px;
-                     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-                 " 
-                 width="600" />
-        </td>
-    </tr>
+  <tr>
+    <td align="center">
+      <img src="${imageUrl}"
+           alt="${imageName}" 
+           style="
+             ${imgWidth} 
+             ${imgHeight}
+             display: block; 
+             border: none; 
+             outline: none; 
+             text-decoration: none; 
+             -ms-interpolation-mode: bicubic;
+             border-radius: 8px;
+             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+           " />
+    </td>
+  </tr>
 </table>`.trim();
 
-    if (activeTemplateTab === 'paste') {
-        const textarea = document.getElementById('template-content');
-        const start = textarea.selectionStart;
-        const end = textarea.selectionEnd;
-        const text = templateContent;
-        const before = text.substring(0, start);
-        const after = text.substring(end, text.length);
+        if (activeTemplateTab === 'paste') {
+            const textarea = document.getElementById('template-content');
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const text = templateContent;
+            const before = text.substring(0, start);
+            const after = text.substring(end, text.length);
 
-        setTemplateContent(before + imageTag + after);
+            setTemplateContent(before + imageTag + after);
 
-        // Set cursor position after inserted image
-        setTimeout(() => {
-            textarea.selectionStart = textarea.selectionEnd = start + imageTag.length;
-            textarea.focus();
-        }, 0);
-    }
-};
+            setTimeout(() => {
+                textarea.selectionStart = textarea.selectionEnd = start + imageTag.length;
+                textarea.focus();
+            }, 0);
+        }
+    };
+
+
+
+    //     const insertImageIntoTemplate = (imageUrl, imageName, base64Data, cidName) => {
+    //         console.log("Inserting image with CID:", cidName);
+
+    //         // Professional email-compatible image styling
+    //         const imageTag = `
+    // <table cellpadding="0" cellspacing="0" border="0" style="margin: 20px 0;">
+    //     <tr>
+    //         <td align="center">
+    //             <img src="${imageUrl}"
+    //                  alt="${imageName}" 
+    //                  style="
+    //                      max-width: 500px; 
+    //                      max-height:300px
+    //                      width: 100%; 
+    //                      height: auto; 
+    //                      display: block; 
+    //                      border: none; 
+    //                      outline: none; 
+    //                      text-decoration: none; 
+    //                      -ms-interpolation-mode: bicubic;
+    //                      border-radius: 8px;
+    //                      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    //                  " 
+    //                  width="600" />
+    //         </td>
+    //     </tr>
+    // </table>`.trim();
+
+    //         if (activeTemplateTab === 'paste') {
+    //             const textarea = document.getElementById('template-content');
+    //             const start = textarea.selectionStart;
+    //             const end = textarea.selectionEnd;
+    //             const text = templateContent;
+    //             const before = text.substring(0, start);
+    //             const after = text.substring(end, text.length);
+
+    //             setTemplateContent(before + imageTag + after);
+
+    //             // Set cursor position after inserted image
+    //             setTimeout(() => {
+    //                 textarea.selectionStart = textarea.selectionEnd = start + imageTag.length;
+    //                 textarea.focus();
+    //             }, 0);
+    //         }
+    //     };
 
 
     // Handle tab switching
@@ -524,11 +562,17 @@ export default function EmailMarketingTool() {
         setVariableMappings(newMappings);
         updateEmailPreview(newMappings);
     };
+    const normalizeWhitespace = (text) => {
+        return text
+            .split('\n')
+            .map(line => line.trimStart())
+            .join('\n');
+    };
 
     // Update email preview
     const updateEmailPreview = (mappings = variableMappings) => {
         if (!templateContent || !excelData || !excelData.sample || excelData.sample.length === 0) {
-            setEmailPreviewContent('Preview will appear here once template and data are ready');
+            setEmailPreviewContent('<div style="text-align: center; color: #999; padding: 60px; font-style: italic; font-size: 18px;">📧 Preview will appear here once template and data are ready</div>');
             return;
         }
 
@@ -536,7 +580,7 @@ export default function EmailMarketingTool() {
         const sampleData = excelData.sample[0];
         let preview = templateContent;
 
-        // Replace variables
+        // Replace variables from mappings
         mappings.forEach(mapping => {
             if (mapping.placeholder && mapping.column && sampleData[mapping.column]) {
                 const regex = new RegExp(`{{${mapping.placeholder}}}`, 'g');
@@ -549,8 +593,29 @@ export default function EmailMarketingTool() {
             preview = preview.replace(/{{name}}/g, sampleData[selectedNameColumn]);
         }
 
-        setEmailPreviewContent(preview);
+
+        const cleaned = normalizeWhitespace(preview);
+        const html = marked.parse(cleaned);
+
+        // Wrap in email container with professional styling but preserve text formatting
+
+        const styledPreview = `
+        <div style="
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            color: #333333;
+            line-height: 1.6;
+            font-size: 16px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        ">
+            ${html}
+        </div>`
+        setEmailPreviewContent(styledPreview);
     };
+
+
 
     // Start sending emails via backend
 
@@ -571,7 +636,7 @@ export default function EmailMarketingTool() {
             }
 
             // Append all other data as form fields
-            formData.append('templateContent', templateContent); // Send template content separately
+            formData.append('templateContent', emailPreviewContent); // Send template content separately
             formData.append('emailColumn', selectedEmailColumn);
             formData.append('nameColumn', selectedNameColumn);
             formData.append('subjectLine', subjectLine);
@@ -624,7 +689,7 @@ export default function EmailMarketingTool() {
         }
     };
 
-
+    console.log(templateContent)
     const draftCampaign = async () => {
         try {
             // Create FormData object
@@ -1192,19 +1257,84 @@ export default function EmailMarketingTool() {
 
                                                     {/* Insert button - only show when not uploading */}
                                                     {!image.uploading && (
-                                                        <div className="absolute bottom-2 left-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                            <button
-                                                                onClick={() => insertImageIntoTemplate(
-                                                                    image.url,
-                                                                    image.filename,
-                                                                    image.base64,
-                                                                    image.cidName || image.filename?.split('.')[0] || image.name.split('.')[0]
-                                                                )}
-                                                                className="w-full px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 shadow-lg"
-                                                                title="Insert as CID reference"
-                                                            >
-                                                                Insert
-                                                            </button>
+                                                        // <div className="absolute bottom-2 left-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        //     <div className="mt-2 bg-blue-600">
+                                                        //         <label className="block text-xs text-gray-600 mb-1">Select Size</label>
+                                                        //         <select
+                                                        //             className="w-full p-1 border border-gray-300 rounded text-xs"
+                                                        //             onChange={(e) => setUploadedImages(prev =>
+                                                        //                 prev.map(img =>
+                                                        //                     img.id === image.id ? { ...img, selectedSize: e.target.value } : img
+                                                        //                 )
+                                                        //             )}
+                                                        //             value={image.selectedSize || ''}
+                                                        //         >
+                                                        //             <option value="">Original Size</option>
+                                                        //             <option value="1280x720">YouTube Thumbnail (1280x720)</option>
+                                                        //             <option value="1080x1080">Instagram Square (1080x1080)</option>
+                                                        //             <option value="1080x1350">Instagram Portrait (1080x1350)</option>
+                                                        //             <option value="2560x1440">YouTube Banner (2560x1440)</option>
+                                                        //             <option value="1200x1200">LinkedIn Post (1200x1200)</option>
+                                                        //             <option value="1584x396">LinkedIn Banner (1584x396)</option>
+                                                        //         </select>
+                                                        //     </div>
+
+                                                        //     <button
+                                                        //         onClick={() => insertImageIntoTemplate(
+                                                        //             image.url,
+                                                        //             image.filename,
+                                                        //             image.base64,
+                                                        //             image.cidName || image.filename?.split('.')[0] || image.name.split('.')[0],
+                                                        //             image.selectedSize
+                                                        //         )}
+                                                        //         className="w-full px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 shadow-lg"
+                                                        //         title="Insert as CID reference"
+                                                        //     >
+                                                        //         Insert
+                                                        //     </button>
+                                                        // </div>
+                                                        <div className="absolute bottom-0 left-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+
+                                                            <div className="bg-gradient-to-t from-black/60 via-black/20 to-transparent p-3">
+
+                                                                <div className="flex gap-2 items-end">
+
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <select
+                                                                            className="w-full p-1.5 text-xs bg-white/90 backdrop-blur-sm border border-white/20 rounded shadow-sm hover:bg-white focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-400"
+                                                                            onChange={(e) => setUploadedImages(prev =>
+                                                                                prev.map(img =>
+                                                                                    img.id === image.id ? { ...img, selectedSize: e.target.value } : img
+                                                                                )
+                                                                            )}
+                                                                            value={image.selectedSize || ''}
+                                                                        >
+                                                                            <option value="">Original Size</option>
+                                                                            <option value="1280x720">YouTube (1280x720)</option>
+                                                                            <option value="1080x1080">IG Square (1080x1080)</option>
+                                                                            <option value="1080x1350">IG Portrait (1080x1350)</option>
+                                                                            <option value="2560x1440">YT Banner (2560x1440)</option>
+                                                                            <option value="1200x1200">LinkedIn (1200x1200)</option>
+                                                                            <option value="1584x396">LI Banner (1584x396)</option>
+                                                                        </select>
+                                                                    </div>
+
+
+                                                                    <button
+                                                                        onClick={() => insertImageIntoTemplate(
+                                                                            image.url,
+                                                                            image.filename,
+                                                                            image.base64,
+                                                                            image.cidName || image.filename?.split('.')[0] || image.name.split('.')[0],
+                                                                            image.selectedSize
+                                                                        )}
+                                                                        className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded shadow-sm transition-colors duration-200 whitespace-nowrap"
+                                                                        title="Insert as CID reference"
+                                                                    >
+                                                                        Insert
+                                                                    </button>
+                                                                </div>
+                                                            </div>
                                                         </div>
                                                     )}
 
@@ -1590,8 +1720,11 @@ export default function EmailMarketingTool() {
                                         __html: emailPreviewContent || 'Preview will appear here once the template is processed'
                                     }}
                                 />
+                                {/* <div>{emailPreviewContent || 'Preview will appear here once the template is processed'}</div> */}
                             </div>
                         </div>
+
+
 
                         <div className="flex justify-between">
                             <button
