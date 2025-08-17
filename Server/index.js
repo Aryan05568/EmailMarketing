@@ -1730,40 +1730,76 @@ app.use((req, res) => {
 });
 
 // Graceful shutdown
+// process.on('SIGTERM', () => {
+//     console.log('SIGTERM received, shutting down gracefully');
+
+//     // Stop all active sending jobs
+//     activeSendingJobs.forEach((jobData, jobId) => {
+//         if (!jobData.completed && !jobData.stopped) {
+//             jobData.shouldStop = true;
+//             console.log(`Stopping job ${jobId} due to server shutdown`);
+//         }
+//     });
+//      campaignScheduler.cleanup();
+
+//     // Give some time for jobs to stop gracefully
+//     setTimeout(() => {
+//         process.exit(0);
+//     }, 5000);
+// });
+
+// process.on('SIGINT', () => {
+//     console.log('SIGINT received, shutting down gracefully');
+
+//     // Stop all active sending jobs
+//     activeSendingJobs.forEach((jobData, jobId) => {
+//         if (!jobData.completed && !jobData.stopped) {
+//             jobData.shouldStop = true;
+//             console.log(`Stopping job ${jobId} due to server shutdown`);
+//         }
+//     });
+//      campaignScheduler.cleanup();
+
+//     // Give some time for jobs to stop gracefully
+//     setTimeout(() => {
+//         process.exit(0);
+//     }, 5000);
+// });
+
+// Graceful shutdown (Render-friendly)
 process.on('SIGTERM', () => {
-    console.log('SIGTERM received, shutting down gracefully');
+  console.log('SIGTERM received, cleaning up...');
+  
+  // Stop all active sending jobs
+  activeSendingJobs.forEach((jobData, jobId) => {
+    if (!jobData.completed && !jobData.stopped) {
+      jobData.shouldStop = true;
+      console.log(`Stopping job ${jobId} due to shutdown signal`);
+    }
+  });
 
-    // Stop all active sending jobs
-    activeSendingJobs.forEach((jobData, jobId) => {
-        if (!jobData.completed && !jobData.stopped) {
-            jobData.shouldStop = true;
-            console.log(`Stopping job ${jobId} due to server shutdown`);
-        }
-    });
-     campaignScheduler.cleanup();
+  // Cleanup campaign scheduler
+  if (campaignScheduler && typeof campaignScheduler.cleanup === 'function') {
+    campaignScheduler.cleanup();
+  }
 
-    // Give some time for jobs to stop gracefully
-    setTimeout(() => {
-        process.exit(0);
-    }, 5000);
+  // ⚠️ Do NOT call process.exit() here.
+  // Render will handle container shutdown by itself.
 });
 
 process.on('SIGINT', () => {
-    console.log('SIGINT received, shutting down gracefully');
+  console.log('SIGINT received, cleaning up...');
+  
+  activeSendingJobs.forEach((jobData, jobId) => {
+    if (!jobData.completed && !jobData.stopped) {
+      jobData.shouldStop = true;
+      console.log(`Stopping job ${jobId} due to shutdown signal`);
+    }
+  });
 
-    // Stop all active sending jobs
-    activeSendingJobs.forEach((jobData, jobId) => {
-        if (!jobData.completed && !jobData.stopped) {
-            jobData.shouldStop = true;
-            console.log(`Stopping job ${jobId} due to server shutdown`);
-        }
-    });
-     campaignScheduler.cleanup();
-
-    // Give some time for jobs to stop gracefully
-    setTimeout(() => {
-        process.exit(0);
-    }, 5000);
+  if (campaignScheduler && typeof campaignScheduler.cleanup === 'function') {
+    campaignScheduler.cleanup();
+  }
 });
 
 
