@@ -1,4 +1,4 @@
-export const BASEURL = "https://emailmarketing-2.onrender.com/"
+export const BASEURL = "https://emailmarketing-2.onrender.com"
 // export const BASEURL = "https://emailmarketing-3qin.onrender.com"
 // export const BASEURL = "http://localhost:5000"
 
