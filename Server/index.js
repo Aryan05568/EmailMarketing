@@ -113,6 +113,13 @@ const uploadFormData = multer({
     }
 });
 
+app.get("/", (req, res) => {
+  res.json({
+    success: true,
+    message: "✅ Email Marketing Server is running!"
+  });
+});
+
 
 
 app.get('/ping', (req, res) => {
