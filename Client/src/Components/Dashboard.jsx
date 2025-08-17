@@ -888,10 +888,10 @@ useEffect(() => {
                       <td className="px-6 py-5 text-sm font-medium text-gray-900">
                         {/* {analytics.sent?.toLocaleString() || '-'}
                          */}
-                         {campaign.emails_sent?.toLocaleString() || '-'}
+                         {campaign.emails_sent?.toLocaleString() || '0'}
                       </td>
                       <td className="px-6 py-5 text-sm font-medium text-gray-900">
-                        {campaign?.failed_emails?.toLocaleString() || '-'}
+                        {campaign?.failed_emails?.toLocaleString() || '0'}
                       </td>
                       {/* <td className="px-6 py-5 text-sm font-medium text-gray-900">
                         {analytics.clicked?.toLocaleString() || '-'}
